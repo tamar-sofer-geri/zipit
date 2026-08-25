@@ -68,9 +68,15 @@ function migrateState(state){
     changed = true;
   }
 
-  if (state.trip && state.trip.tags && !state.trip.tripType){
+  if (state.trip && state.trip.tags && !state.trip.tripType && !state.trip.tripTypes){
     state.trip.tripType = state.trip.tags[0] || '';
     delete state.trip.tags;
+    changed = true;
+  }
+
+  if (state.trip && state.trip.tripType !== undefined && !state.trip.tripTypes){
+    state.trip.tripTypes = state.trip.tripType ? [state.trip.tripType] : [];
+    delete state.trip.tripType;
     changed = true;
   }
 
@@ -96,7 +102,7 @@ function persist(){
   }, 150);
 }
 
-var trip = STATE.trip || { days: 7, location: '', tripType: '' };
+var trip = STATE.trip || { days: 7, location: '', tripTypes: [] };
 var manualOverrides = STATE.manualOverrides || {};
 var packed = STATE.packed || {};
 var openMore = {};
@@ -128,7 +134,7 @@ function itemById(id){
 function activeRules(){
   return STATE.rules.filter(function(r){
     if (r.kind === 'location') return r.key === trip.location;
-    if (r.kind === 'tripType') return trip.tripType === r.key;
+    if (r.kind === 'tripType') return trip.tripTypes.indexOf(r.key) !== -1;
     return false;
   });
 }
@@ -182,11 +188,8 @@ function computeItem(item){
     });
   });
 
-  if (qty === 0 && trip.tripType && item.tags && item.tags.indexOf(trip.tripType) !== -1){
+  if (qty === 0 && item.tags && item.tags.length && trip.tripTypes.some(function(t){ return item.tags.indexOf(t) !== -1; })){
     qty = 1;
-    var tagRule = STATE.rules.filter(function(r){ return r.kind === 'tripType' && r.key === trip.tripType; })[0];
-    var tagLabel = tagRule ? tagRule.label : trip.tripType;
-    adjustments.push({ rule: { label: tagLabel, note: 'Tagged for this trip type' }, text: '🏷 ' + tagLabel });
   }
 
   var manual = false;
@@ -214,8 +217,10 @@ function addLocation(){
   return key;
 }
 
-function setTripType(key){
-  trip.tripType = key;
+function toggleTripType(key, on){
+  var idx = trip.tripTypes.indexOf(key);
+  if (on && idx === -1) trip.tripTypes.push(key);
+  else if (!on && idx !== -1) trip.tripTypes.splice(idx, 1);
   persist();
   renderPlan();
 }
@@ -318,15 +323,17 @@ function renderPlan(){
   });
   panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Destination' }), locSelect ]));
 
-  var typeSelect = el('select', { class: 'select-field' });
-  typeSelect.appendChild(el('option', { value: '', text: 'None' }));
+  var typeGroup = el('div', { class: 'checkbox-group' });
   STATE.rules.filter(function(r){ return r.kind === 'tripType'; }).forEach(function(r){
-    var o = el('option', { value: r.key, text: r.label });
-    if (trip.tripType === r.key) o.setAttribute('selected', '');
-    typeSelect.appendChild(o);
+    var cbId = 'triptype-' + r.key;
+    var cb = el('input', { type: 'checkbox', id: cbId });
+    cb.checked = trip.tripTypes.indexOf(r.key) !== -1;
+    cb.addEventListener('change', function(){ toggleTripType(r.key, cb.checked); });
+    typeGroup.appendChild(el('label', { class: 'checkbox-label', for: cbId, title: r.note }, [
+      cb, document.createTextNode(r.label)
+    ]));
   });
-  typeSelect.addEventListener('change', function(){ setTripType(typeSelect.value); });
-  panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Trip type' }), typeSelect ]));
+  panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Trip type' }), typeGroup ]));
 
   view.appendChild(panel);
 
@@ -498,7 +505,8 @@ function openItemEditor(item){
   body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Category' }), catSelect ]));
 
   var tagGroup = el('div', { class: 'chip-group' });
-  STATE.rules.filter(function(r){ return r.kind === 'tripType'; }).forEach(function(r){
+  var tripTypeRules = STATE.rules.filter(function(r){ return r.kind === 'tripType'; });
+  tripTypeRules.forEach(function(r){
     var on = item.tags.indexOf(r.key) !== -1;
     var chip = el('button', {
       type: 'button', class: 'chip chip-sm' + (on ? ' selected' : ''), text: r.label,
@@ -511,7 +519,18 @@ function openItemEditor(item){
     });
     tagGroup.appendChild(chip);
   });
-  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Trip type' }), tagGroup ]));
+  var tagLabelRow = el('div', { class: 'field-label-row' }, [
+    el('label', { text: 'Trip type' }),
+    el('button', {
+      type: 'button', class: 'link-btn', text: 'Select all',
+      onclick: function(){
+        item.tags = tripTypeRules.map(function(r){ return r.key; });
+        persist();
+        openItemEditor(item);
+      }
+    })
+  ]);
+  body.appendChild(el('div', { class: 'field' }, [ tagLabelRow, tagGroup ]));
 
   var modeSelect = el('select', { class: 'select-field' });
   ['fixed', 'perDay'].forEach(function(m){
