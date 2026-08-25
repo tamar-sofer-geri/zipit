@@ -1,6 +1,6 @@
 # 🧳 Zip It!
 
-A packing checklist that scales quantities by trip length, destination, and trip type. No build step — plain HTML/CSS/JavaScript hosted on GitHub Pages, with data kept in the browser's local storage (no account, no sign-in, no server).
+A packing checklist that scales quantities by trip length and trip type. No build step — plain HTML/CSS/JavaScript hosted on GitHub Pages, with data kept in the browser's local storage (no account, no sign-in, no server).
 
 ## Live app
 
@@ -10,11 +10,11 @@ On your phone, open the link and use your browser's **Add to Home Screen** to in
 
 ## How it works
 
-- **Plan** — set trip length, destination, and trip type. Quantities recompute live from the base list, boosted or added to by whichever rules apply. Items not needed for the current trip collapse into a "not needed" row instead of cluttering the list. Check items off as you pack, or nudge any quantity up/down by hand.
-- **Base List** — every item, grouped by category. Each is either a **fixed** quantity (same regardless of trip length) or a **per day** rate (scales with the number of days). Edit freely, add or remove items.
-- **Rules** — the logic that adjusts quantities for a destination or trip type: multiply a category, add extra units to specific items, or force a minimum. Each rule is either tied to a **Location** (shown as a destination chip) or a **Trip type** (shown as a toggle chip usable on any trip).
+- **Plan** — set trip length and check off whichever trip types apply (Israel, Hot, City, Fancy, and so on — any combination). An item shows up only if at least one of its tags matches a checked trip type, at the quantity or per-day rate you set for it in Base List. Untagged items stay hidden — add them ad hoc with the "+ Add" button in the "not needed for this trip" row. Check items off as you pack, or nudge any quantity up/down by hand.
+- **Base List** — every item, grouped by category. Tap one to edit its Category, Trip type tags, Mode (**fixed** quantity vs. **per day** rate), Qty/rate, and Notes. "Select all" tags an item for every trip type at once — useful for things you always need (passport, toothbrush) regardless of trip type.
+- **Plans** — save the current trip length + checked trip types + checked-off items + quantity tweaks as a named plan, so you can plan two trips at once without one overwriting the other. Load, rename, or delete saved plans here; "+ New plan" clears the working Plan tab to start a fresh one.
 
-Everything you edit saves automatically to that device's local storage. Since there's no backend, edits made on your phone and on a computer won't sync to each other — each device keeps its own copy. "Reset for new trip" on the Plan tab clears checked-off items and manual quantity tweaks without touching your base list or rules; "Reset base list to defaults" on the Base List tab restores the original seeded data.
+Everything you edit saves automatically to that device's local storage. Since there's no backend, edits made on your phone and on a computer won't sync to each other — each device keeps its own copy. "Reset for new trip" on the Plan tab clears checked-off items and manual quantity tweaks without touching your base list or saved plans; "Reset base list to defaults" on the Base List tab restores the original seeded items (your saved plans and their tags are untouched).
 
 ## Deploying changes
 

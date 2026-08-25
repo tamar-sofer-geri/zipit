@@ -136,6 +136,22 @@ a{color:var(--accent);}
   width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;
 }
 
+.plan-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.plan-name{font-family:"Fraunces",serif;font-size:17px;font-weight:600;}
+.plan-bar-actions{display:flex;gap:8px;}
+
+.plan-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+.plan-card.active{border-color:var(--accent);}
+.plan-card-name{font-family:"Fraunces",serif;font-size:16px;font-weight:600;}
+.plan-card-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+
 .rule-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;min-height:0;}
 .rule-chip{
   display:inline-flex;align-items:center;gap:6px;
