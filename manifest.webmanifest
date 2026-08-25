@@ -1,14 +1,14 @@
 {
-  "name": "Manifest",
-  "short_name": "Manifest",
+  "name": "Zip It!",
+  "short_name": "Zip It!",
   "description": "A packing checklist that scales by trip length, destination, and trip type",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "background_color": "#101C24",
-  "theme_color": "#101C24",
+  "background_color": "#F2F5F4",
+  "theme_color": "#F2F5F4",
   "icons": [
-    { "src": "icon.svg?v=2", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" },
-    { "src": "apple-touch-icon.png?v=2", "type": "image/png", "sizes": "180x180" }
+    { "src": "icon.svg?v=3", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" },
+    { "src": "apple-touch-icon.png?v=3", "type": "image/png", "sizes": "180x180" }
   ]
 }

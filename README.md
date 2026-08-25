@@ -1,4 +1,4 @@
-# 🧳 Manifest
+# 🧳 Zip It!
 
 A packing checklist that scales quantities by trip length, destination, and trip type. No build step — plain HTML/CSS/JavaScript hosted on GitHub Pages, with data kept in the browser's local storage (no account, no sign-in, no server).
 
