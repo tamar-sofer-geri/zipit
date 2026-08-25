@@ -4,7 +4,7 @@ A packing checklist that scales quantities by trip length and trip type. No buil
 
 ## Live app
 
-**<https://tamar-sofer-geri.github.io/packing-manifest/>**
+**<https://tamar-sofer-geri.github.io/zipit/>**
 
 On your phone, open the link and use your browser's **Add to Home Screen** to install it like an app.
 
