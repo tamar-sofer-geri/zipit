@@ -3,7 +3,7 @@
 
 var STORAGE_KEY = 'manifest-data-v1';
 
-var DEFAULT_STATE = {"categories":["Travel Essentials","Clothes","Other","Shoes","Toiletries","Medications","Nature & Weather"],"items":[{"id":"te-passports","category":"Travel Essentials","name":"Passports","mode":"fixed","qty":2},{"id":"te-tz","category":"Travel Essentials","name":"T.Z. (Teudat Zehut)","mode":"fixed","qty":1},{"id":"te-license","category":"Travel Essentials","name":"Driver's license","mode":"fixed","qty":1},{"id":"te-map","category":"Travel Essentials","name":"Map","mode":"fixed","qty":1},{"id":"te-eyemask","category":"Travel Essentials","name":"Eye mask","mode":"fixed","qty":1},{"id":"cl-tshirts-nice","category":"Clothes","name":"Nice t-shirts","mode":"perDay","rate":1.2},{"id":"cl-tshirts-sport","category":"Clothes","name":"Sport / Stanford t-shirts","mode":"perDay","rate":0},{"id":"cl-socks-short","category":"Clothes","name":"Short socks","mode":"perDay","rate":1.0},{"id":"cl-socks-long","category":"Clothes","name":"Long socks","mode":"perDay","rate":0.6},{"id":"cl-pants-long","category":"Clothes","name":"Long pants","mode":"perDay","rate":0.5},{"id":"cl-capris","category":"Clothes","name":"Capris","mode":"perDay","rate":0.3},{"id":"cl-jacket","category":"Clothes","name":"Jacket / sweater wrap","mode":"fixed","qty":1,"note":"Always bring one"},{"id":"cl-shirts-ls","category":"Clothes","name":"Long sleeve shirts","mode":"perDay","rate":0.6},{"id":"cl-pjs","category":"Clothes","name":"PJs","mode":"perDay","rate":0.4},{"id":"cl-underpants","category":"Clothes","name":"Underpants","mode":"perDay","rate":1.2},{"id":"cl-bras","category":"Clothes","name":"Bras","mode":"perDay","rate":0.8},{"id":"cl-swimsuit","category":"Clothes","name":"Swim suits","mode":"fixed","qty":0},{"id":"cl-swim-coverup","category":"Clothes","name":"Bathing suit cover-up","mode":"fixed","qty":0},{"id":"cl-sunglasses","category":"Clothes","name":"Sunglasses","mode":"fixed","qty":1},{"id":"cl-pilates","category":"Clothes","name":"Pilates clothes + grippy socks","mode":"fixed","qty":0,"note":"As needed \u2014 don't forget the socks!"},{"id":"ot-wallcharger","category":"Other","name":"Wall charger + USB-C cable","mode":"fixed","qty":2},{"id":"ot-carcharger","category":"Other","name":"Car charger","mode":"fixed","qty":1},{"id":"ot-converters","category":"Other","name":"Plug converters","mode":"fixed","qty":3},{"id":"ot-glasses","category":"Other","name":"Glasses","mode":"fixed","qty":2},{"id":"ot-computer","category":"Other","name":"Computer","mode":"fixed","qty":1},{"id":"ot-computercharger","category":"Other","name":"Computer charger","mode":"fixed","qty":1},{"id":"ot-laundrybag","category":"Other","name":"Laundry bags","mode":"fixed","qty":1},{"id":"ot-watch","category":"Other","name":"Watch","mode":"fixed","qty":1},{"id":"ot-earrings","category":"Other","name":"Earrings","mode":"fixed","qty":3},{"id":"ot-necklaces","category":"Other","name":"Necklaces","mode":"fixed","qty":3},{"id":"ot-headphones","category":"Other","name":"Headphones","mode":"fixed","qty":2},{"id":"ot-hairdryer","category":"Other","name":"Hair dryer + adapter","mode":"fixed","qty":0},{"id":"ot-bagplane","category":"Other","name":"Reusable bag for the plane","mode":"fixed","qty":1},{"id":"sh-boots","category":"Shoes","name":"Boots","mode":"fixed","qty":1},{"id":"sh-heels","category":"Shoes","name":"Heels","mode":"fixed","qty":0},{"id":"sh-sandals","category":"Shoes","name":"Sandals","mode":"fixed","qty":0,"note":"Required for Israel regardless of season"},{"id":"sh-flipflops","category":"Shoes","name":"Flip flops / indoor shoes","mode":"fixed","qty":1},{"id":"sh-sneakers","category":"Shoes","name":"Sneakers","mode":"fixed","qty":1},{"id":"sh-keens","category":"Shoes","name":"Keens / Chaco / Teva sandals","mode":"fixed","qty":0},{"id":"sh-halfshoes","category":"Shoes","name":"Half shoes","mode":"fixed","qty":0},{"id":"sh-hiking","category":"Shoes","name":"Hiking boots","mode":"fixed","qty":1},{"id":"sh-slipons","category":"Shoes","name":"Cloth slip-ons","mode":"fixed","qty":3},{"id":"to-toothbrush","category":"Toiletries","name":"Toothbrush","mode":"fixed","qty":1},{"id":"to-toothpaste","category":"Toiletries","name":"Toothpaste","mode":"fixed","qty":1},{"id":"to-deodorant","category":"Toiletries","name":"Deodorant","mode":"fixed","qty":1},{"id":"to-shampoo","category":"Toiletries","name":"Shampoo","mode":"fixed","qty":1},{"id":"to-conditioner","category":"Toiletries","name":"Conditioner","mode":"fixed","qty":1},{"id":"to-shapeshifter","category":"Toiletries","name":"Shape Shifter","mode":"fixed","qty":1},{"id":"to-gel","category":"Toiletries","name":"Gel","mode":"fixed","qty":1},{"id":"to-serum","category":"Toiletries","name":"Serum","mode":"fixed","qty":1},{"id":"to-hairtowels","category":"Toiletries","name":"Hair towels","mode":"fixed","qty":2},{"id":"to-facesoap","category":"Toiletries","name":"Face soap","mode":"fixed","qty":1},{"id":"to-facelotion","category":"Toiletries","name":"Face lotion","mode":"fixed","qty":1},{"id":"to-soap","category":"Toiletries","name":"Soap","mode":"fixed","qty":1},{"id":"to-rubberbands","category":"Toiletries","name":"Rubber bands","mode":"fixed","qty":3},{"id":"to-nailfile","category":"Toiletries","name":"Nail file","mode":"fixed","qty":2},{"id":"to-concealer","category":"Toiletries","name":"Concealer","mode":"fixed","qty":1},{"id":"to-chapstick","category":"Toiletries","name":"Chapstick","mode":"fixed","qty":1},{"id":"me-naratriptan","category":"Medications","name":"Naratriptan","mode":"fixed","qty":1,"unit":"pack"},{"id":"me-albuterol","category":"Medications","name":"Albuterol","mode":"fixed","qty":1,"unit":"pack"},{"id":"me-lactaid","category":"Medications","name":"Lactaid","mode":"fixed","qty":1,"unit":"pack"},{"id":"me-cymbalta","category":"Medications","name":"Cymbalta","mode":"fixed","qty":1,"unit":"bottle"},{"id":"me-advil","category":"Medications","name":"Advil","mode":"fixed","qty":1,"unit":"bottle"},{"id":"me-ozempic","category":"Medications","name":"Ozempic","mode":"fixed","qty":1},{"id":"me-statin","category":"Medications","name":"Statin","mode":"fixed","qty":1},{"id":"me-hormonepills","category":"Medications","name":"Hormone pills","mode":"fixed","qty":1},{"id":"me-hormonepatches","category":"Medications","name":"Hormone patches","mode":"fixed","qty":1,"unit":"box"},{"id":"me-xyzal","category":"Medications","name":"Xyzal / allergy meds","mode":"fixed","qty":1,"note":"Extra important for Israel & New Orleans mosquitoes","unit":"bottle"},{"id":"na-backpack","category":"Nature & Weather","name":"Osprey backpack","mode":"fixed","qty":0},{"id":"na-gloves","category":"Nature & Weather","name":"Gloves","mode":"fixed","qty":0},{"id":"na-headband","category":"Nature & Weather","name":"Fleece headband","mode":"fixed","qty":0},{"id":"na-cowl","category":"Nature & Weather","name":"Cowl","mode":"fixed","qty":1},{"id":"na-warmers","category":"Nature & Weather","name":"Hand / foot warmers","mode":"perDay","rate":0,"note":"One per day when needed"},{"id":"na-hikingpoles","category":"Nature & Weather","name":"Hiking poles","mode":"fixed","qty":0},{"id":"na-hikingsocks","category":"Nature & Weather","name":"Hiking socks","mode":"fixed","qty":0},{"id":"na-picnicblanket","category":"Nature & Weather","name":"Picnic blanket (compact, foldable)","mode":"fixed","qty":2},{"id":"na-beachblankets","category":"Nature & Weather","name":"Beach blankets","mode":"fixed","qty":0},{"id":"na-waterbottles","category":"Nature & Weather","name":"Water bottles","mode":"fixed","qty":1},{"id":"na-insectrepellent","category":"Nature & Weather","name":"Insect repellent","mode":"fixed","qty":0},{"id":"na-sunscreen","category":"Nature & Weather","name":"Sunscreen","mode":"fixed","qty":0},{"id":"na-allergymeds","category":"Nature & Weather","name":"Allergy meds for mosquito bites","mode":"fixed","qty":0,"note":"Required anywhere there might be mosquitoes"}],"rules":[{"id":"israel","kind":"location","key":"israel","label":"Israel","note":"Extra showers & outfit changes each day \u2014 clothes and toiletries scale up. Sandals and flip flops go every time, regardless of season.","effects":[{"targetType":"category","targetValue":"Clothes","op":"multiply","value":1.5},{"targetType":"category","targetValue":"Toiletries","op":"multiply","value":1.5},{"targetType":"item","targetValue":"sh-sandals","op":"setMin","value":1},{"targetType":"item","targetValue":"sh-flipflops","op":"setMin","value":1},{"targetType":"item","targetValue":"na-allergymeds","op":"setMin","value":1}]},{"id":"neworleans","kind":"location","key":"neworleans","label":"New Orleans (Book Fest)","note":"Rooms run freezing indoors \u2014 pack thin layers you can add and shed.","effects":[{"targetType":"item","targetValue":"cl-shirts-ls","op":"add","value":2},{"targetType":"item","targetValue":"cl-jacket","op":"add","value":1},{"targetType":"item","targetValue":"cl-pants-long","op":"add","value":2},{"targetType":"item","targetValue":"cl-socks-long","op":"add","value":2}]},{"id":"hawaii","kind":"location","key":"hawaii","label":"Hawaii","note":"Beach days \u2014 swimwear plus sun & bug protection.","effects":[{"targetType":"item","targetValue":"cl-swimsuit","op":"setMin","value":2},{"targetType":"item","targetValue":"cl-swim-coverup","op":"setMin","value":1},{"targetType":"item","targetValue":"sh-flipflops","op":"setMin","value":1},{"targetType":"item","targetValue":"na-sunscreen","op":"setMin","value":1},{"targetType":"item","targetValue":"na-insectrepellent","op":"setMin","value":1}]},{"id":"cold","kind":"tripType","key":"cold","label":"Cold / Outdoors","note":"Hiking & cold-weather gear.","effects":[{"targetType":"item","targetValue":"na-backpack","op":"setMin","value":1},{"targetType":"item","targetValue":"na-gloves","op":"setMin","value":1},{"targetType":"item","targetValue":"na-headband","op":"setMin","value":1},{"targetType":"item","targetValue":"sh-keens","op":"setMin","value":1},{"targetType":"item","targetValue":"na-hikingpoles","op":"setMin","value":1},{"targetType":"item","targetValue":"na-hikingsocks","op":"setMin","value":2},{"targetType":"item","targetValue":"na-warmers","op":"setRate","value":1}]},{"id":"beach","kind":"tripType","key":"beach","label":"Beach / Swim","note":"Beach essentials for any warm-water trip.","effects":[{"targetType":"item","targetValue":"cl-swimsuit","op":"setMin","value":1},{"targetType":"item","targetValue":"cl-swim-coverup","op":"setMin","value":1},{"targetType":"item","targetValue":"sh-flipflops","op":"setMin","value":1},{"targetType":"item","targetValue":"na-beachblankets","op":"setMin","value":1},{"targetType":"item","targetValue":"na-sunscreen","op":"setMin","value":1},{"targetType":"item","targetValue":"na-insectrepellent","op":"setMin","value":1}]}]};;
+var DEFAULT_STATE = {"categories":["Travel Essentials","Clothes","Other","Shoes","Toiletries","Medications","Nature & Weather"],"items":[{"id":"te-passports","category":"Travel Essentials","name":"Passports","mode":"fixed","qty":2},{"id":"te-tz","category":"Travel Essentials","name":"T.Z. (Teudat Zehut)","mode":"fixed","qty":1},{"id":"te-license","category":"Travel Essentials","name":"Driver's license","mode":"fixed","qty":1},{"id":"te-map","category":"Travel Essentials","name":"Map","mode":"fixed","qty":1},{"id":"te-eyemask","category":"Travel Essentials","name":"Eye mask","mode":"fixed","qty":1},{"id":"cl-tshirts-nice","category":"Clothes","name":"Nice t-shirts","mode":"perDay","rate":1.2},{"id":"cl-tshirts-sport","category":"Clothes","name":"Sport / Stanford t-shirts","mode":"perDay","rate":0},{"id":"cl-socks-short","category":"Clothes","name":"Short socks","mode":"perDay","rate":1.0},{"id":"cl-socks-long","category":"Clothes","name":"Long socks","mode":"perDay","rate":0.6},{"id":"cl-pants-long","category":"Clothes","name":"Long pants","mode":"perDay","rate":0.5},{"id":"cl-capris","category":"Clothes","name":"Capris","mode":"perDay","rate":0.3},{"id":"cl-jacket","category":"Clothes","name":"Jacket / sweater wrap","mode":"fixed","qty":1,"note":"Always bring one"},{"id":"cl-shirts-ls","category":"Clothes","name":"Long sleeve shirts","mode":"perDay","rate":0.6},{"id":"cl-pjs","category":"Clothes","name":"PJs","mode":"perDay","rate":0.4},{"id":"cl-underpants","category":"Clothes","name":"Underpants","mode":"perDay","rate":1.2},{"id":"cl-bras","category":"Clothes","name":"Bras","mode":"perDay","rate":0.8},{"id":"cl-swimsuit","category":"Clothes","name":"Swim suits","mode":"fixed","qty":0},{"id":"cl-swim-coverup","category":"Clothes","name":"Bathing suit cover-up","mode":"fixed","qty":0},{"id":"cl-sunglasses","category":"Clothes","name":"Sunglasses","mode":"fixed","qty":1},{"id":"cl-pilates","category":"Clothes","name":"Pilates clothes + grippy socks","mode":"fixed","qty":0,"note":"As needed \u2014 don't forget the socks!"},{"id":"ot-wallcharger","category":"Other","name":"Wall charger + USB-C cable","mode":"fixed","qty":2},{"id":"ot-carcharger","category":"Other","name":"Car charger","mode":"fixed","qty":1},{"id":"ot-converters","category":"Other","name":"Plug converters","mode":"fixed","qty":3},{"id":"ot-glasses","category":"Other","name":"Glasses","mode":"fixed","qty":2},{"id":"ot-computer","category":"Other","name":"Computer","mode":"fixed","qty":1},{"id":"ot-computercharger","category":"Other","name":"Computer charger","mode":"fixed","qty":1},{"id":"ot-laundrybag","category":"Other","name":"Laundry bags","mode":"fixed","qty":1},{"id":"ot-watch","category":"Other","name":"Watch","mode":"fixed","qty":1},{"id":"ot-earrings","category":"Other","name":"Earrings","mode":"fixed","qty":3},{"id":"ot-necklaces","category":"Other","name":"Necklaces","mode":"fixed","qty":3},{"id":"ot-headphones","category":"Other","name":"Headphones","mode":"fixed","qty":2},{"id":"ot-hairdryer","category":"Other","name":"Hair dryer + adapter","mode":"fixed","qty":0},{"id":"ot-bagplane","category":"Other","name":"Reusable bag for the plane","mode":"fixed","qty":1},{"id":"sh-boots","category":"Shoes","name":"Boots","mode":"fixed","qty":1},{"id":"sh-heels","category":"Shoes","name":"Heels","mode":"fixed","qty":0},{"id":"sh-sandals","category":"Shoes","name":"Sandals","mode":"fixed","qty":0,"note":"Required for Israel regardless of season"},{"id":"sh-flipflops","category":"Shoes","name":"Flip flops / indoor shoes","mode":"fixed","qty":1},{"id":"sh-sneakers","category":"Shoes","name":"Sneakers","mode":"fixed","qty":1},{"id":"sh-keens","category":"Shoes","name":"Keens / Chaco / Teva sandals","mode":"fixed","qty":0},{"id":"sh-halfshoes","category":"Shoes","name":"Half shoes","mode":"fixed","qty":0},{"id":"sh-hiking","category":"Shoes","name":"Hiking boots","mode":"fixed","qty":1},{"id":"sh-slipons","category":"Shoes","name":"Cloth slip-ons","mode":"fixed","qty":3},{"id":"to-toothbrush","category":"Toiletries","name":"Toothbrush","mode":"fixed","qty":1},{"id":"to-toothpaste","category":"Toiletries","name":"Toothpaste","mode":"fixed","qty":1},{"id":"to-deodorant","category":"Toiletries","name":"Deodorant","mode":"fixed","qty":1},{"id":"to-shampoo","category":"Toiletries","name":"Shampoo","mode":"fixed","qty":1},{"id":"to-conditioner","category":"Toiletries","name":"Conditioner","mode":"fixed","qty":1},{"id":"to-shapeshifter","category":"Toiletries","name":"Shape Shifter","mode":"fixed","qty":1},{"id":"to-gel","category":"Toiletries","name":"Gel","mode":"fixed","qty":1},{"id":"to-serum","category":"Toiletries","name":"Serum","mode":"fixed","qty":1},{"id":"to-hairtowels","category":"Toiletries","name":"Hair towels","mode":"fixed","qty":2},{"id":"to-facesoap","category":"Toiletries","name":"Face soap","mode":"fixed","qty":1},{"id":"to-facelotion","category":"Toiletries","name":"Face lotion","mode":"fixed","qty":1},{"id":"to-soap","category":"Toiletries","name":"Soap","mode":"fixed","qty":1},{"id":"to-rubberbands","category":"Toiletries","name":"Rubber bands","mode":"fixed","qty":3},{"id":"to-nailfile","category":"Toiletries","name":"Nail file","mode":"fixed","qty":2},{"id":"to-concealer","category":"Toiletries","name":"Concealer","mode":"fixed","qty":1},{"id":"to-chapstick","category":"Toiletries","name":"Chapstick","mode":"fixed","qty":1},{"id":"me-naratriptan","category":"Medications","name":"Naratriptan","mode":"fixed","qty":1,"unit":"pack"},{"id":"me-albuterol","category":"Medications","name":"Albuterol","mode":"fixed","qty":1,"unit":"pack"},{"id":"me-lactaid","category":"Medications","name":"Lactaid","mode":"fixed","qty":1,"unit":"pack"},{"id":"me-cymbalta","category":"Medications","name":"Cymbalta","mode":"fixed","qty":1,"unit":"bottle"},{"id":"me-advil","category":"Medications","name":"Advil","mode":"fixed","qty":1,"unit":"bottle"},{"id":"me-ozempic","category":"Medications","name":"Ozempic","mode":"fixed","qty":1},{"id":"me-statin","category":"Medications","name":"Statin","mode":"fixed","qty":1},{"id":"me-hormonepills","category":"Medications","name":"Hormone pills","mode":"fixed","qty":1},{"id":"me-hormonepatches","category":"Medications","name":"Hormone patches","mode":"fixed","qty":1,"unit":"box"},{"id":"me-xyzal","category":"Medications","name":"Xyzal / allergy meds","mode":"fixed","qty":1,"note":"Extra important for Israel & New Orleans mosquitoes","unit":"bottle"},{"id":"na-backpack","category":"Nature & Weather","name":"Osprey backpack","mode":"fixed","qty":0},{"id":"na-gloves","category":"Nature & Weather","name":"Gloves","mode":"fixed","qty":0},{"id":"na-headband","category":"Nature & Weather","name":"Fleece headband","mode":"fixed","qty":0},{"id":"na-cowl","category":"Nature & Weather","name":"Cowl","mode":"fixed","qty":1},{"id":"na-warmers","category":"Nature & Weather","name":"Hand / foot warmers","mode":"perDay","rate":0,"note":"One per day when needed"},{"id":"na-hikingpoles","category":"Nature & Weather","name":"Hiking poles","mode":"fixed","qty":0},{"id":"na-hikingsocks","category":"Nature & Weather","name":"Hiking socks","mode":"fixed","qty":0},{"id":"na-picnicblanket","category":"Nature & Weather","name":"Picnic blanket (compact, foldable)","mode":"fixed","qty":2},{"id":"na-beachblankets","category":"Nature & Weather","name":"Beach blankets","mode":"fixed","qty":0},{"id":"na-waterbottles","category":"Nature & Weather","name":"Water bottles","mode":"fixed","qty":1},{"id":"na-insectrepellent","category":"Nature & Weather","name":"Insect repellent","mode":"fixed","qty":0},{"id":"na-sunscreen","category":"Nature & Weather","name":"Sunscreen","mode":"fixed","qty":0},{"id":"na-allergymeds","category":"Nature & Weather","name":"Allergy meds for mosquito bites","mode":"fixed","qty":0,"note":"Required anywhere there might be mosquitoes"}],"rules":[{"id":"israel","kind":"location","key":"israel","label":"Israel","note":"Extra showers & outfit changes each day \u2014 clothes and toiletries scale up. Sandals and flip flops go every time, regardless of season.","effects":[{"targetType":"category","targetValue":"Clothes","op":"multiply","value":1.5},{"targetType":"category","targetValue":"Toiletries","op":"multiply","value":1.5},{"targetType":"item","targetValue":"sh-sandals","op":"setMin","value":1},{"targetType":"item","targetValue":"sh-flipflops","op":"setMin","value":1},{"targetType":"item","targetValue":"na-allergymeds","op":"setMin","value":1}]},{"id":"neworleans","kind":"location","key":"neworleans","label":"New Orleans","note":"Rooms run freezing indoors \u2014 pack thin layers you can add and shed.","effects":[{"targetType":"item","targetValue":"cl-shirts-ls","op":"add","value":2},{"targetType":"item","targetValue":"cl-jacket","op":"add","value":1},{"targetType":"item","targetValue":"cl-pants-long","op":"add","value":2},{"targetType":"item","targetValue":"cl-socks-long","op":"add","value":2}]},{"id":"hawaii","kind":"location","key":"hawaii","label":"Hawaii","note":"Beach days \u2014 swimwear plus sun & bug protection.","effects":[{"targetType":"item","targetValue":"cl-swimsuit","op":"setMin","value":2},{"targetType":"item","targetValue":"cl-swim-coverup","op":"setMin","value":1},{"targetType":"item","targetValue":"sh-flipflops","op":"setMin","value":1},{"targetType":"item","targetValue":"na-sunscreen","op":"setMin","value":1},{"targetType":"item","targetValue":"na-insectrepellent","op":"setMin","value":1}]},{"id":"city","kind":"tripType","key":"city","label":"City","note":"General city trip — add your own adjustments in Rules.","effects":[]},{"id":"outdoors","kind":"tripType","key":"outdoors","label":"Outdoors - hiking","note":"Hiking & outdoor gear.","effects":[{"targetType":"item","targetValue":"na-backpack","op":"setMin","value":1},{"targetType":"item","targetValue":"sh-keens","op":"setMin","value":1},{"targetType":"item","targetValue":"na-hikingpoles","op":"setMin","value":1},{"targetType":"item","targetValue":"na-hikingsocks","op":"setMin","value":2}]},{"id":"beach","kind":"tripType","key":"beach","label":"Swim / beach","note":"Beach essentials for any warm-water trip.","effects":[{"targetType":"item","targetValue":"cl-swimsuit","op":"setMin","value":1},{"targetType":"item","targetValue":"cl-swim-coverup","op":"setMin","value":1},{"targetType":"item","targetValue":"sh-flipflops","op":"setMin","value":1},{"targetType":"item","targetValue":"na-beachblankets","op":"setMin","value":1},{"targetType":"item","targetValue":"na-sunscreen","op":"setMin","value":1},{"targetType":"item","targetValue":"na-insectrepellent","op":"setMin","value":1}]},{"id":"fancy","kind":"tripType","key":"fancy","label":"Fancy","note":"Dressier occasions.","effects":[{"targetType":"item","targetValue":"sh-heels","op":"setMin","value":1}]},{"id":"hot","kind":"tripType","key":"hot","label":"Hot","note":"Hot-weather protection.","effects":[{"targetType":"item","targetValue":"na-sunscreen","op":"setMin","value":1}]},{"id":"cold","kind":"tripType","key":"cold","label":"Cold","note":"Cold-weather layers.","effects":[{"targetType":"item","targetValue":"na-gloves","op":"setMin","value":1},{"targetType":"item","targetValue":"na-headband","op":"setMin","value":1},{"targetType":"item","targetValue":"na-warmers","op":"setRate","value":1}]}]};
 
 function loadState(){
   try {
@@ -21,7 +21,66 @@ function structuredCloneState(s){
   return JSON.parse(JSON.stringify(s));
 }
 
+function migrateState(state){
+  var changed = false;
+  function findRule(key){
+    for (var i = 0; i < state.rules.length; i++) if (state.rules[i].key === key) return state.rules[i];
+    return null;
+  }
+
+  var neworleans = findRule('neworleans');
+  if (neworleans && neworleans.label === 'New Orleans (Book Fest)'){ neworleans.label = 'New Orleans'; changed = true; }
+
+  var beach = findRule('beach');
+  if (beach && beach.label === 'Beach / Swim'){ beach.label = 'Swim / beach'; changed = true; }
+
+  var cold = findRule('cold');
+  if (cold && cold.label === 'Cold / Outdoors'){
+    cold.label = 'Cold';
+    cold.note = 'Cold-weather layers.';
+    var keep = { 'na-gloves': 1, 'na-headband': 1, 'na-warmers': 1 };
+    cold.effects = cold.effects.filter(function(e){ return keep.hasOwnProperty(e.targetValue); });
+    changed = true;
+  }
+  if (!findRule('outdoors')){
+    state.rules.push({ id: 'outdoors', kind: 'tripType', key: 'outdoors', label: 'Outdoors - hiking', note: 'Hiking & outdoor gear.', effects: [
+      { targetType: 'item', targetValue: 'na-backpack', op: 'setMin', value: 1 },
+      { targetType: 'item', targetValue: 'sh-keens', op: 'setMin', value: 1 },
+      { targetType: 'item', targetValue: 'na-hikingpoles', op: 'setMin', value: 1 },
+      { targetType: 'item', targetValue: 'na-hikingsocks', op: 'setMin', value: 2 }
+    ] });
+    changed = true;
+  }
+  if (!findRule('city')){
+    state.rules.push({ id: 'city', kind: 'tripType', key: 'city', label: 'City', note: 'General city trip — add your own adjustments in Rules.', effects: [] });
+    changed = true;
+  }
+  if (!findRule('fancy')){
+    state.rules.push({ id: 'fancy', kind: 'tripType', key: 'fancy', label: 'Fancy', note: 'Dressier occasions.', effects: [
+      { targetType: 'item', targetValue: 'sh-heels', op: 'setMin', value: 1 }
+    ] });
+    changed = true;
+  }
+  if (!findRule('hot')){
+    state.rules.push({ id: 'hot', kind: 'tripType', key: 'hot', label: 'Hot', note: 'Hot-weather protection.', effects: [
+      { targetType: 'item', targetValue: 'na-sunscreen', op: 'setMin', value: 1 }
+    ] });
+    changed = true;
+  }
+
+  if (state.trip && state.trip.tags && !state.trip.tripType){
+    state.trip.tripType = state.trip.tags[0] || '';
+    delete state.trip.tags;
+    changed = true;
+  }
+
+  return changed;
+}
+
 var STATE = loadState();
+if (migrateState(STATE)){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch (e){}
+}
 
 var persistTimer = null;
 function persist(){
@@ -31,7 +90,7 @@ function persist(){
   }, 150);
 }
 
-var trip = STATE.trip || { days: 7, location: '', tags: [] };
+var trip = STATE.trip || { days: 7, location: '', tripType: '' };
 var manualOverrides = STATE.manualOverrides || {};
 var packed = STATE.packed || {};
 var openMore = {};
@@ -63,7 +122,7 @@ function itemById(id){
 function activeRules(){
   return STATE.rules.filter(function(r){
     if (r.kind === 'location') return r.key === trip.location;
-    if (r.kind === 'tripType') return trip.tags.indexOf(r.key) !== -1;
+    if (r.kind === 'tripType') return trip.tripType === r.key;
     return false;
   });
 }
@@ -117,6 +176,13 @@ function computeItem(item){
     });
   });
 
+  if (qty === 0 && trip.tripType && item.tags && item.tags.indexOf(trip.tripType) !== -1){
+    qty = 1;
+    var tagRule = STATE.rules.filter(function(r){ return r.kind === 'tripType' && r.key === trip.tripType; })[0];
+    var tagLabel = tagRule ? tagRule.label : trip.tripType;
+    adjustments.push({ rule: { label: tagLabel, note: 'Tagged for this trip type' }, text: '🏷 ' + tagLabel });
+  }
+
   var manual = false;
   if (manualOverrides.hasOwnProperty(item.id)){
     qty = manualOverrides[item.id];
@@ -132,28 +198,18 @@ function setDays(n){
   renderPlan();
 }
 
-function toggleLocation(key){
-  trip.location = (trip.location === key) ? '' : key;
-  persist();
-  renderPlan();
-}
-
 function addLocation(){
   var name = window.prompt('Destination name (e.g. Portugal):');
-  if (!name) return;
+  if (!name) return null;
   name = name.trim();
-  if (!name) return;
+  if (!name) return null;
   var key = 'loc' + Math.random().toString(36).slice(2, 8);
   STATE.rules.push({ id: key, kind: 'location', key: key, label: name, note: '', effects: [] });
-  trip.location = key;
-  persist();
-  renderPlan();
-  renderRules();
+  return key;
 }
 
-function toggleTag(key){
-  var idx = trip.tags.indexOf(key);
-  if (idx === -1) trip.tags.push(key); else trip.tags.splice(idx, 1);
+function setTripType(key){
+  trip.tripType = key;
   persist();
   renderPlan();
 }
@@ -233,28 +289,38 @@ function renderPlan(){
   ]);
   panel.appendChild(daysField);
 
-  var locGroup = el('div', { class: 'chip-group' });
+  var locSelect = el('select', { class: 'select-field' });
+  locSelect.appendChild(el('option', { value: '', text: 'None' }));
   STATE.rules.filter(function(r){ return r.kind === 'location'; }).forEach(function(r){
-    locGroup.appendChild(el('button', {
-      type: 'button', class: 'chip' + (trip.location === r.key ? ' selected' : ''), text: r.label,
-      title: r.note, onclick: function(){ toggleLocation(r.key); }
-    }));
+    var o = el('option', { value: r.key, text: r.label });
+    if (trip.location === r.key) o.setAttribute('selected', '');
+    locSelect.appendChild(o);
   });
-  locGroup.appendChild(el('button', {
-    type: 'button', class: 'chip chip-add', text: '+ New', title: 'Add a destination',
-    onclick: addLocation
-  }));
-  panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Destination' }), locGroup ]));
+  locSelect.appendChild(el('option', { value: '__new__', text: 'New…' }));
+  locSelect.addEventListener('change', function(){
+    if (locSelect.value === '__new__'){
+      var newKey = addLocation();
+      trip.location = newKey || trip.location;
+      persist();
+      renderPlan();
+      renderRules();
+      return;
+    }
+    trip.location = locSelect.value;
+    persist();
+    renderPlan();
+  });
+  panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Destination' }), locSelect ]));
 
-  var tagGroup = el('div', { class: 'chip-group' });
+  var typeSelect = el('select', { class: 'select-field' });
+  typeSelect.appendChild(el('option', { value: '', text: 'None' }));
   STATE.rules.filter(function(r){ return r.kind === 'tripType'; }).forEach(function(r){
-    var on = trip.tags.indexOf(r.key) !== -1;
-    tagGroup.appendChild(el('button', {
-      type: 'button', class: 'chip toggle' + (on ? ' selected' : ''), text: r.label,
-      title: r.note, onclick: function(){ toggleTag(r.key); }
-    }));
+    var o = el('option', { value: r.key, text: r.label });
+    if (trip.tripType === r.key) o.setAttribute('selected', '');
+    typeSelect.appendChild(o);
   });
-  panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Trip type' }), tagGroup ]));
+  typeSelect.addEventListener('change', function(){ setTripType(typeSelect.value); });
+  panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Trip type' }), typeSelect ]));
 
   view.appendChild(panel);
 
@@ -370,6 +436,7 @@ function renderBaseList(){
     var tbody = el('tbody');
     STATE.items.filter(function(it){ return it.category === cat; }).forEach(function(item){
       tbody.appendChild(renderItemEditRow(item));
+      tbody.appendChild(renderItemTagRow(item));
     });
     table.appendChild(tbody);
     wrap.appendChild(table);
@@ -389,8 +456,30 @@ function renderBaseList(){
   });
 }
 
+function renderItemTagRow(item){
+  var tr = el('tr', { class: 'tag-row' });
+  var td = el('td', { colspan: '4' });
+  var group = el('div', { class: 'chip-group tag-chip-group' });
+  if (!item.tags) item.tags = [];
+  STATE.rules.filter(function(r){ return r.kind === 'tripType'; }).forEach(function(r){
+    var on = item.tags.indexOf(r.key) !== -1;
+    group.appendChild(el('button', {
+      type: 'button', class: 'chip chip-sm' + (on ? ' selected' : ''), text: r.label,
+      onclick: function(){
+        var idx = item.tags.indexOf(r.key);
+        if (idx === -1) item.tags.push(r.key); else item.tags.splice(idx, 1);
+        persist();
+        renderBaseList();
+      }
+    }));
+  });
+  td.appendChild(group);
+  tr.appendChild(td);
+  return tr;
+}
+
 function renderItemEditRow(item){
-  var tr = el('tr');
+  var tr = el('tr', { class: 'edit-row' });
 
   var nameInput = el('input', { type: 'text', value: item.name });
   nameInput.addEventListener('input', function(){ item.name = nameInput.value; persist(); });

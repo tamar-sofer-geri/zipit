@@ -134,6 +134,14 @@ a{color:var(--accent);}
 .chip.chip-add{border-style:dashed;color:var(--muted);background:transparent;}
 .chip.chip-add:hover{border-color:var(--accent);color:var(--accent);}
 
+.select-field{
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  padding:9px 12px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;
+  width:100%;max-width:320px;
+}
+.select-field:hover{border-color:var(--accent);}
+.select-field:focus{outline:none;border-color:var(--accent);}
+
 .rule-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;min-height:0;}
 .rule-chip{
   display:inline-flex;align-items:center;gap:6px;
@@ -235,6 +243,10 @@ details.more[open] summary:before{content:"– ";}
 .edit-table input[type="text"]:hover,.edit-table input[type="number"]:hover,.edit-table select:hover{border-color:var(--line);}
 .edit-table input[type="text"]:focus,.edit-table input[type="number"]:focus,.edit-table select:focus{border-color:var(--accent);outline:none;background:var(--surface-alt);}
 .edit-table input[type="number"]{width:80px;font-family:"IBM Plex Mono",monospace;}
+.edit-table .edit-row td{border-bottom:none;}
+.tag-row td{padding:0 12px 10px;}
+.tag-row .chip-group{gap:6px;}
+.chip.chip-sm{padding:4px 10px;font-size:11px;}
 .icon-btn{
   width:28px;height:28px;border-radius:6px;border:1px solid transparent;background:transparent;
   color:var(--muted);cursor:pointer;font-size:14px;
