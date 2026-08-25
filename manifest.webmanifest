@@ -1,0 +1,14 @@
+{
+  "name": "Manifest",
+  "short_name": "Manifest",
+  "description": "A packing checklist that scales by trip length, destination, and trip type",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#101C24",
+  "theme_color": "#101C24",
+  "icons": [
+    { "src": "icon.svg?v=1", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" },
+    { "src": "apple-touch-icon.png?v=1", "type": "image/png", "sizes": "180x180" }
+  ]
+}

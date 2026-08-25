@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Manifest">
+  <rect width="512" height="512" rx="112" fill="#15242E"/>
+  <!-- handle -->
+  <path d="M206 176 v-34 a12 12 0 0 1 12-12 h76 a12 12 0 0 1 12 12 v34" fill="none" stroke="#D9AE68" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- case body -->
+  <rect x="126" y="176" width="260" height="196" rx="26" fill="#D9AE68"/>
+  <!-- strap -->
+  <rect x="126" y="250" width="260" height="26" fill="#B98B3E"/>
+  <!-- latches -->
+  <rect x="192" y="238" width="30" height="50" rx="6" fill="#15242E"/>
+  <rect x="290" y="238" width="30" height="50" rx="6" fill="#15242E"/>
+</svg>
