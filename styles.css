@@ -243,6 +243,8 @@ details.more[open] summary:before{content:"– ";}
 }
 .icon-btn:hover{border-color:var(--critical);color:var(--critical);background:var(--critical-soft);}
 .add-row-btn{margin:10px 12px 12px;}
+.extra-add-row{display:flex;gap:8px;padding:10px 12px 12px;}
+.extra-add-row .editor-input{flex:1;}
 
 .edit-list{padding:4px 8px;}
 .edit-summary-row{cursor:pointer;}

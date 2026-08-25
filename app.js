@@ -125,10 +125,12 @@ function persist(){
 var trip = STATE.trip || { days: 7, destination: '', tripTypes: [] };
 var manualOverrides = STATE.manualOverrides || {};
 var packed = STATE.packed || {};
+var extraItems = STATE.extraItems || [];
 var openMore = {};
 STATE.trip = trip;
 STATE.manualOverrides = manualOverrides;
 STATE.packed = packed;
+STATE.extraItems = extraItems;
 if (STATE.activePlanId === undefined) STATE.activePlanId = null;
 
 function el(tag, attrs, children){
@@ -214,6 +216,28 @@ function forceAdd(id){
   renderPlan();
 }
 
+function addExtraItem(name){
+  extraItems.push({ id: 'extra' + Math.random().toString(36).slice(2, 9), name: name, qty: 1 });
+  persist();
+  renderPlan();
+}
+
+function adjustExtraQty(id, delta){
+  var item = extraItems.filter(function(it){ return it.id === id; })[0];
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  persist();
+  renderPlan();
+}
+
+function removeExtraItem(id){
+  extraItems = extraItems.filter(function(it){ return it.id !== id; });
+  STATE.extraItems = extraItems;
+  delete packed[id];
+  persist();
+  renderPlan();
+}
+
 function togglePacked(id){
   packed[id] = !packed[id];
   persist();
@@ -280,8 +304,10 @@ function updateProgress(){
 function resetTrip(){
   manualOverrides = {};
   packed = {};
+  extraItems = [];
   STATE.manualOverrides = manualOverrides;
   STATE.packed = packed;
+  STATE.extraItems = extraItems;
   persist();
   renderPlan();
 }
@@ -312,6 +338,7 @@ function currentPlanSnapshot(name){
     tripTypes: trip.tripTypes.slice(),
     packed: JSON.parse(JSON.stringify(packed)),
     manualOverrides: JSON.parse(JSON.stringify(manualOverrides)),
+    extraItems: JSON.parse(JSON.stringify(extraItems)),
     updatedAt: Date.now()
   };
 }
@@ -324,6 +351,7 @@ function savePlan(){
     active.tripTypes = trip.tripTypes.slice();
     active.packed = JSON.parse(JSON.stringify(packed));
     active.manualOverrides = JSON.parse(JSON.stringify(manualOverrides));
+    active.extraItems = JSON.parse(JSON.stringify(extraItems));
     active.updatedAt = Date.now();
     persist();
     renderPlan();
@@ -352,9 +380,11 @@ function loadPlan(id){
   trip.tripTypes = plan.tripTypes.slice();
   packed = JSON.parse(JSON.stringify(plan.packed));
   manualOverrides = JSON.parse(JSON.stringify(plan.manualOverrides));
+  extraItems = JSON.parse(JSON.stringify(plan.extraItems || []));
   STATE.trip = trip;
   STATE.packed = packed;
   STATE.manualOverrides = manualOverrides;
+  STATE.extraItems = extraItems;
   STATE.activePlanId = id;
   persist();
   switchTab('plan');
@@ -368,9 +398,11 @@ function newPlan(){
   trip.tripTypes = [];
   packed = {};
   manualOverrides = {};
+  extraItems = [];
   STATE.trip = trip;
   STATE.packed = packed;
   STATE.manualOverrides = manualOverrides;
+  STATE.extraItems = extraItems;
   STATE.activePlanId = null;
   persist();
   switchTab('plan');
@@ -520,6 +552,28 @@ function renderPlan(){
 
     grid.appendChild(card);
   });
+
+  var extraCard = el('article', { class: 'cat-card' });
+  extraCard.appendChild(el('header', {}, [
+    el('h2', { text: 'Extra items for this trip' }),
+    el('span', { class: 'count mono', text: String(extraItems.length) })
+  ]));
+  var extraList = el('ul', { class: 'item-list' });
+  extraItems.forEach(function(it){
+    extraList.appendChild(renderExtraItemRow(it));
+  });
+  extraCard.appendChild(extraList);
+
+  var extraNameInput = el('input', { class: 'editor-input', type: 'text', placeholder: 'e.g. Dress for the wedding' });
+  var addExtraBtn = el('button', { class: 'btn ghost', type: 'button', text: '+ Add', onclick: function(){
+    var name = extraNameInput.value.trim();
+    if (!name) return;
+    addExtraItem(name);
+  } });
+  extraNameInput.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); addExtraBtn.click(); } });
+  extraCard.appendChild(el('div', { class: 'extra-add-row' }, [ extraNameInput, addExtraBtn ]));
+
+  grid.appendChild(extraCard);
   view.appendChild(grid);
 
   updateProgress();
@@ -546,6 +600,28 @@ function renderItemRow(item, r){
     el('button', { type: 'button', text: '+', onclick: function(){ adjustQty(item.id, 1); } })
   ]);
   row.appendChild(qc);
+
+  return row;
+}
+
+function renderExtraItemRow(item){
+  var row = el('li', { class: 'item-row' + (packed[item.id] ? ' packed' : ''), 'data-id': item.id });
+
+  var cb = el('input', { type: 'checkbox' });
+  cb.checked = !!packed[item.id];
+  cb.addEventListener('change', function(){ togglePacked(item.id); });
+  row.appendChild(el('label', { class: 'check' }, [ cb, el('span', {}) ]));
+
+  row.appendChild(el('div', { class: 'item-main' }, [ el('span', { class: 'item-name', text: item.name }) ]));
+
+  var qc = el('div', { class: 'qty-control' }, [
+    el('button', { type: 'button', text: '−', onclick: function(){ adjustExtraQty(item.id, -1); } }),
+    el('span', { class: 'qty mono', text: String(item.qty) }),
+    el('button', { type: 'button', text: '+', onclick: function(){ adjustExtraQty(item.id, 1); } })
+  ]);
+  row.appendChild(qc);
+
+  row.appendChild(el('button', { class: 'icon-btn', type: 'button', text: '✕', title: 'Remove', onclick: function(){ removeExtraItem(item.id); } }));
 
   return row;
 }
