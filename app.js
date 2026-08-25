@@ -138,6 +138,19 @@ function toggleLocation(key){
   renderPlan();
 }
 
+function addLocation(){
+  var name = window.prompt('Destination name (e.g. Portugal):');
+  if (!name) return;
+  name = name.trim();
+  if (!name) return;
+  var key = 'loc' + Math.random().toString(36).slice(2, 8);
+  STATE.rules.push({ id: key, kind: 'location', key: key, label: name, note: '', effects: [] });
+  trip.location = key;
+  persist();
+  renderPlan();
+  renderRules();
+}
+
 function toggleTag(key){
   var idx = trip.tags.indexOf(key);
   if (idx === -1) trip.tags.push(key); else trip.tags.splice(idx, 1);
@@ -221,16 +234,16 @@ function renderPlan(){
   panel.appendChild(daysField);
 
   var locGroup = el('div', { class: 'chip-group' });
-  locGroup.appendChild(el('button', {
-    type: 'button', class: 'chip' + (trip.location === '' ? ' selected' : ''), text: 'None',
-    onclick: function(){ trip.location = ''; persist(); renderPlan(); }
-  }));
   STATE.rules.filter(function(r){ return r.kind === 'location'; }).forEach(function(r){
     locGroup.appendChild(el('button', {
       type: 'button', class: 'chip' + (trip.location === r.key ? ' selected' : ''), text: r.label,
       title: r.note, onclick: function(){ toggleLocation(r.key); }
     }));
   });
+  locGroup.appendChild(el('button', {
+    type: 'button', class: 'chip chip-add', text: '+ New', title: 'Add a destination',
+    onclick: addLocation
+  }));
   panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Destination' }), locGroup ]));
 
   var tagGroup = el('div', { class: 'chip-group' });
@@ -352,8 +365,7 @@ function renderBaseList(){
     var wrap = el('div', { class: 'overflow-x' });
     var table = el('table', { class: 'edit-table' });
     table.appendChild(el('thead', {}, [ el('tr', {}, [
-      el('th', { text: 'Item' }), el('th', { text: 'Mode' }), el('th', { text: 'Qty / day rate' }),
-      el('th', { text: 'Unit' }), el('th', { text: 'Note' }), el('th', {})
+      el('th', { text: 'Item' }), el('th', { text: 'Mode' }), el('th', { text: 'Qty / rate' }), el('th', {})
     ]) ]));
     var tbody = el('tbody');
     STATE.items.filter(function(it){ return it.category === cat; }).forEach(function(item){
@@ -406,14 +418,6 @@ function renderItemEditRow(item){
     persist();
   });
   tr.appendChild(el('td', {}, [ qtyInput ]));
-
-  var unitInput = el('input', { type: 'text', value: item.unit || '', placeholder: '—' });
-  unitInput.addEventListener('input', function(){ item.unit = unitInput.value || undefined; persist(); });
-  tr.appendChild(el('td', {}, [ unitInput ]));
-
-  var noteInput = el('input', { type: 'text', value: item.note || '', placeholder: '—' });
-  noteInput.addEventListener('input', function(){ item.note = noteInput.value || undefined; persist(); });
-  tr.appendChild(el('td', {}, [ noteInput ]));
 
   tr.appendChild(el('td', {}, [
     el('button', {
