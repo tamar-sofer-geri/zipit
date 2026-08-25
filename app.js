@@ -425,30 +425,25 @@ function renderBaseList(){
   ]));
 
   STATE.categories.forEach(function(cat){
+    var catItems = STATE.items.filter(function(it){ return it.category === cat; });
     var card = el('div', { class: 'edit-card' });
-    card.appendChild(el('header', {}, [ el('h2', { text: cat }) ]));
+    card.appendChild(el('header', {}, [ el('h2', { text: cat }), el('span', { class: 'count mono', text: String(catItems.length) }) ]));
 
-    var wrap = el('div', { class: 'overflow-x' });
-    var table = el('table', { class: 'edit-table' });
-    table.appendChild(el('thead', {}, [ el('tr', {}, [
-      el('th', { text: 'Item' }), el('th', { text: 'Mode' }), el('th', { text: 'Qty / rate' }), el('th', {})
-    ]) ]));
-    var tbody = el('tbody');
-    STATE.items.filter(function(it){ return it.category === cat; }).forEach(function(item){
-      tbody.appendChild(renderItemEditRow(item));
-      tbody.appendChild(renderItemTagRow(item));
+    var list = el('ul', { class: 'item-list edit-list' });
+    catItems.forEach(function(item){
+      list.appendChild(renderItemSummaryRow(item));
     });
-    table.appendChild(tbody);
-    wrap.appendChild(table);
-    card.appendChild(wrap);
+    card.appendChild(list);
 
     card.appendChild(el('button', {
       class: 'btn ghost add-row-btn', type: 'button', text: '+ Add item',
       onclick: function(){
         var id = 'custom-' + Math.random().toString(36).slice(2, 9);
-        STATE.items.push({ id: id, category: cat, name: 'New item', mode: 'fixed', qty: 1 });
+        var item = { id: id, category: cat, name: 'New item', mode: 'fixed', qty: 1, tags: [] };
+        STATE.items.push(item);
         persist();
         renderBaseList();
+        openItemEditor(item);
       }
     }));
 
@@ -456,36 +451,68 @@ function renderBaseList(){
   });
 }
 
-function renderItemTagRow(item){
-  var tr = el('tr', { class: 'tag-row' });
-  var td = el('td', { colspan: '4' });
-  var group = el('div', { class: 'chip-group tag-chip-group' });
+function renderItemSummaryRow(item){
   if (!item.tags) item.tags = [];
+  var metaParts = [ item.mode === 'fixed' ? ('Fixed · ' + item.qty) : ('Per day · ' + item.rate + '/day') ];
+  if (item.tags.length){
+    metaParts.push(item.tags.map(function(k){
+      var r = STATE.rules.filter(function(rr){ return rr.kind === 'tripType' && rr.key === k; })[0];
+      return r ? r.label : k;
+    }).join(', '));
+  }
+  var row = el('li', { class: 'item-row edit-summary-row', onclick: function(){ openItemEditor(item); } }, [
+    el('div', { class: 'item-main' }, [
+      el('span', { class: 'item-name', text: item.name }),
+      el('span', { class: 'item-summary-meta', text: metaParts.join(' · ') })
+    ]),
+    el('span', { class: 'summary-arrow', text: '›' })
+  ]);
+  return row;
+}
+
+function openItemEditor(item){
+  var dialog = document.getElementById('item-dialog');
+  dialog.innerHTML = '';
+  if (!item.tags) item.tags = [];
+
+  var header = el('div', { class: 'dialog-header' }, [
+    el('h2', { text: 'Edit item' }),
+    el('button', { class: 'icon-btn', type: 'button', text: '✕', title: 'Close', onclick: function(){ dialog.close(); renderBaseList(); } })
+  ]);
+  dialog.appendChild(header);
+
+  var body = el('div', { class: 'item-editor' });
+
+  var nameInput = el('input', { type: 'text', class: 'editor-input', value: item.name });
+  nameInput.addEventListener('input', function(){ item.name = nameInput.value; persist(); });
+  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Name' }), nameInput ]));
+
+  var catSelect = el('select', { class: 'select-field' });
+  STATE.categories.forEach(function(c){
+    var o = el('option', { value: c, text: c });
+    if (item.category === c) o.setAttribute('selected', '');
+    catSelect.appendChild(o);
+  });
+  catSelect.addEventListener('change', function(){ item.category = catSelect.value; persist(); });
+  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Category' }), catSelect ]));
+
+  var tagGroup = el('div', { class: 'chip-group' });
   STATE.rules.filter(function(r){ return r.kind === 'tripType'; }).forEach(function(r){
     var on = item.tags.indexOf(r.key) !== -1;
-    group.appendChild(el('button', {
+    var chip = el('button', {
       type: 'button', class: 'chip chip-sm' + (on ? ' selected' : ''), text: r.label,
       onclick: function(){
         var idx = item.tags.indexOf(r.key);
         if (idx === -1) item.tags.push(r.key); else item.tags.splice(idx, 1);
+        chip.classList.toggle('selected');
         persist();
-        renderBaseList();
       }
-    }));
+    });
+    tagGroup.appendChild(chip);
   });
-  td.appendChild(group);
-  tr.appendChild(td);
-  return tr;
-}
+  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Trip type' }), tagGroup ]));
 
-function renderItemEditRow(item){
-  var tr = el('tr', { class: 'edit-row' });
-
-  var nameInput = el('input', { type: 'text', value: item.name });
-  nameInput.addEventListener('input', function(){ item.name = nameInput.value; persist(); });
-  tr.appendChild(el('td', {}, [ nameInput ]));
-
-  var modeSelect = el('select');
+  var modeSelect = el('select', { class: 'select-field' });
   ['fixed', 'perDay'].forEach(function(m){
     var opt = el('option', { value: m, text: m === 'fixed' ? 'Fixed' : 'Per day' });
     if (item.mode === m) opt.setAttribute('selected', '');
@@ -495,34 +522,43 @@ function renderItemEditRow(item){
     if (modeSelect.value === 'fixed'){ item.mode = 'fixed'; item.qty = item.qty || 1; delete item.rate; }
     else { item.mode = 'perDay'; item.rate = item.rate || 0; delete item.qty; }
     persist();
-    renderBaseList();
+    openItemEditor(item);
   });
-  tr.appendChild(el('td', {}, [ modeSelect ]));
+  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Mode' }), modeSelect ]));
 
-  var qtyInput = el('input', { type: 'number', step: item.mode === 'perDay' ? '0.1' : '1', min: '0',
+  var qtyInput = el('input', { class: 'editor-input', type: 'number', step: item.mode === 'perDay' ? '0.1' : '1', min: '0',
     value: item.mode === 'perDay' ? item.rate : item.qty });
   qtyInput.addEventListener('input', function(){
     var v = parseFloat(qtyInput.value) || 0;
     if (item.mode === 'perDay') item.rate = v; else item.qty = v;
     persist();
   });
-  tr.appendChild(el('td', {}, [ qtyInput ]));
+  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: item.mode === 'perDay' ? 'Rate per day' : 'Quantity' }), qtyInput ]));
 
-  tr.appendChild(el('td', {}, [
+  var noteInput = el('input', { class: 'editor-input', type: 'text', value: item.note || '', placeholder: 'Optional' });
+  noteInput.addEventListener('input', function(){ item.note = noteInput.value || undefined; persist(); });
+  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Notes' }), noteInput ]));
+
+  dialog.appendChild(body);
+
+  var footer = el('div', { class: 'dialog-footer' }, [
     el('button', {
-      class: 'icon-btn', type: 'button', text: '✕', title: 'Delete item',
+      class: 'btn ghost', type: 'button', text: 'Delete item',
       onclick: function(){
         STATE.items = STATE.items.filter(function(it){ return it.id !== item.id; });
         STATE.rules.forEach(function(rule){
           rule.effects = rule.effects.filter(function(eff){ return !(eff.targetType === 'item' && eff.targetValue === item.id); });
         });
         persist();
+        dialog.close();
         renderBaseList();
       }
-    })
-  ]));
+    }),
+    el('button', { class: 'btn primary', type: 'button', text: 'Done', onclick: function(){ dialog.close(); renderBaseList(); } })
+  ]);
+  dialog.appendChild(footer);
 
-  return tr;
+  dialog.showModal();
 }
 
 // ---------- Rendering: Rules view ----------
@@ -674,11 +710,14 @@ function boot(){
       '<section id="view-plan" class="view active"></section>' +
       '<section id="view-baselist" class="view"></section>' +
       '<section id="view-rules" class="view"></section>' +
-    '</main>';
+    '</main>' +
+    '<dialog id="item-dialog" class="item-dialog"></dialog>';
 
   document.querySelectorAll('.tab').forEach(function(b){
     b.addEventListener('click', function(){ switchTab(b.getAttribute('data-tab')); });
   });
+
+  document.getElementById('item-dialog').addEventListener('close', function(){ renderBaseList(); });
 
   renderPlan();
   renderBaseList();
