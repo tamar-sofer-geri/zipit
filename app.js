@@ -190,14 +190,12 @@ function setDestination(key){
   renderPlan();
 }
 
-function addDestination(){
-  var name = window.prompt('Destination name (e.g. Portugal):');
-  if (!name) return null;
-  name = name.trim();
-  if (!name) return null;
-  var key = 'dest' + Math.random().toString(36).slice(2, 8);
-  STATE.destinations.push({ key: key, label: name, note: '' });
-  return key;
+function addDestination(onAdded){
+  showPrompt('Add a destination', '', 'e.g. Portugal', function(name){
+    var key = 'dest' + Math.random().toString(36).slice(2, 8);
+    STATE.destinations.push({ key: key, label: name, note: '' });
+    onAdded(key);
+  });
 }
 
 function adjustQty(id, delta){
@@ -226,6 +224,49 @@ function togglePacked(id){
 
 function cssEscape(s){ return s.replace(/[^a-zA-Z0-9_-]/g, '\\$&'); }
 
+function showPrompt(title, defaultValue, placeholder, onConfirm){
+  var dialog = document.getElementById('prompt-dialog');
+  dialog.innerHTML = '';
+  dialog.appendChild(el('div', { class: 'dialog-header' }, [ el('h2', { text: title }) ]));
+
+  var input = el('input', { class: 'editor-input', type: 'text', value: defaultValue || '', placeholder: placeholder || '' });
+  var body = el('div', { class: 'item-editor' }, [ el('div', { class: 'field' }, [ input ]) ]);
+  dialog.appendChild(body);
+
+  function confirm(){
+    var v = input.value.trim();
+    dialog.close();
+    if (v) onConfirm(v);
+  }
+
+  input.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); confirm(); } });
+
+  var footer = el('div', { class: 'dialog-footer' }, [
+    el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: function(){ dialog.close(); } }),
+    el('button', { class: 'btn primary', type: 'button', text: 'OK', onclick: confirm })
+  ]);
+  dialog.appendChild(footer);
+
+  dialog.showModal();
+  input.focus();
+  input.select();
+}
+
+function showConfirm(message, confirmLabel, onConfirm){
+  var dialog = document.getElementById('prompt-dialog');
+  dialog.innerHTML = '';
+  dialog.appendChild(el('div', { class: 'dialog-header' }, [ el('h2', { text: 'Are you sure?' }) ]));
+  dialog.appendChild(el('div', { class: 'item-editor' }, [ el('p', { class: 'confirm-message', text: message }) ]));
+
+  var footer = el('div', { class: 'dialog-footer' }, [
+    el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: function(){ dialog.close(); } }),
+    el('button', { class: 'btn primary', type: 'button', text: confirmLabel || 'OK', onclick: function(){ dialog.close(); onConfirm(); } })
+  ]);
+  dialog.appendChild(footer);
+
+  dialog.showModal();
+}
+
 function updateProgress(){
   var rows = document.querySelectorAll('#checklist .item-row[data-id]');
   var total = rows.length, done = 0;
@@ -246,13 +287,14 @@ function resetTrip(){
 }
 
 function resetToDefaults(){
-  if (!window.confirm('Reset the base list back to the originals? Your current trip selections and saved plans stay put.')) return;
-  var fresh = structuredCloneState(DEFAULT_STATE);
-  STATE.items = fresh.items;
-  STATE.categories = fresh.categories;
-  persist();
-  renderPlan();
-  renderBaseList();
+  showConfirm('Reset the base list back to the originals? Your current trip selections and saved plans stay put.', 'Reset', function(){
+    var fresh = structuredCloneState(DEFAULT_STATE);
+    STATE.items = fresh.items;
+    STATE.categories = fresh.categories;
+    persist();
+    renderPlan();
+    renderBaseList();
+  });
 }
 
 // ---------- Saved Plans ----------
@@ -292,16 +334,14 @@ function savePlan(){
 }
 
 function savePlanAs(){
-  var name = window.prompt('Name this plan:', 'Trip');
-  if (!name) return;
-  name = name.trim();
-  if (!name) return;
-  var plan = currentPlanSnapshot(name);
-  STATE.savedPlans.push(plan);
-  STATE.activePlanId = plan.id;
-  persist();
-  renderPlan();
-  renderPlans();
+  showPrompt('Name this plan', 'Trip', '', function(name){
+    var plan = currentPlanSnapshot(name);
+    STATE.savedPlans.push(plan);
+    STATE.activePlanId = plan.id;
+    persist();
+    renderPlan();
+    renderPlans();
+  });
 }
 
 function loadPlan(id){
@@ -341,25 +381,24 @@ function newPlan(){
 function renamePlan(id){
   var plan = findPlan(id);
   if (!plan) return;
-  var name = window.prompt('Rename plan:', plan.name);
-  if (!name) return;
-  name = name.trim();
-  if (!name) return;
-  plan.name = name;
-  persist();
-  renderPlans();
-  renderPlan();
+  showPrompt('Rename plan', plan.name, '', function(name){
+    plan.name = name;
+    persist();
+    renderPlans();
+    renderPlan();
+  });
 }
 
 function deletePlan(id){
   var plan = findPlan(id);
   if (!plan) return;
-  if (!window.confirm('Delete "' + plan.name + '"? This can\'t be undone.')) return;
-  STATE.savedPlans = STATE.savedPlans.filter(function(p){ return p.id !== id; });
-  if (STATE.activePlanId === id) STATE.activePlanId = null;
-  persist();
-  renderPlans();
-  renderPlan();
+  showConfirm('Delete "' + plan.name + '"? This can\'t be undone.', 'Delete', function(){
+    STATE.savedPlans = STATE.savedPlans.filter(function(p){ return p.id !== id; });
+    if (STATE.activePlanId === id) STATE.activePlanId = null;
+    persist();
+    renderPlans();
+    renderPlan();
+  });
 }
 
 // ---------- Rendering: Plan view ----------
@@ -401,8 +440,8 @@ function renderPlan(){
   destSelect.appendChild(el('option', { value: '__new__', text: 'New…' }));
   destSelect.addEventListener('change', function(){
     if (destSelect.value === '__new__'){
-      var newKey = addDestination();
-      setDestination(newKey || trip.destination);
+      addDestination(function(key){ setDestination(key); });
+      renderPlan();
       return;
     }
     setDestination(destSelect.value);
@@ -731,7 +770,8 @@ function boot(){
       '<section id="view-baselist" class="view"></section>' +
       '<section id="view-plans" class="view"></section>' +
     '</main>' +
-    '<dialog id="item-dialog" class="item-dialog"></dialog>';
+    '<dialog id="item-dialog" class="item-dialog"></dialog>' +
+    '<dialog id="prompt-dialog" class="item-dialog prompt-dialog"></dialog>';
 
   document.querySelectorAll('.tab').forEach(function(b){
     b.addEventListener('click', function(){ switchTab(b.getAttribute('data-tab')); });
