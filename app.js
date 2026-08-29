@@ -652,11 +652,11 @@ function renderBaseList(){
       class: 'btn ghost add-row-btn', type: 'button', text: '+ Add item',
       onclick: function(){
         var id = 'custom-' + Math.random().toString(36).slice(2, 9);
-        var item = { id: id, category: cat, name: 'New item', mode: 'fixed', qty: 1, tags: [] };
+        var item = { id: id, category: cat, name: '', mode: 'fixed', qty: 1, tags: [] };
         STATE.items.push(item);
         persist();
         renderBaseList();
-        openItemEditor(item);
+        openItemEditor(item, true);
       }
     }));
 
@@ -680,7 +680,7 @@ function renderItemSummaryRow(item){
   return row;
 }
 
-function openItemEditor(item){
+function openItemEditor(item, focusName){
   var dialog = document.getElementById('item-dialog');
   dialog.innerHTML = '';
   if (!item.tags) item.tags = [];
@@ -693,7 +693,7 @@ function openItemEditor(item){
 
   var body = el('div', { class: 'item-editor' });
 
-  var nameInput = el('input', { type: 'text', class: 'editor-input', value: item.name });
+  var nameInput = el('input', { type: 'text', class: 'editor-input', value: item.name, placeholder: 'e.g. Toothbrush' });
   nameInput.addEventListener('input', function(){ item.name = nameInput.value; persist(); });
   body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Name' }), nameInput ]));
 
@@ -782,6 +782,10 @@ function openItemEditor(item){
   dialog.appendChild(footer);
 
   dialog.showModal();
+  if (focusName){
+    nameInput.focus();
+    nameInput.select();
+  }
 }
 
 // ---------- Rendering: Plans view ----------
