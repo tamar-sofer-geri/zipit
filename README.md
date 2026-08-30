@@ -16,6 +16,10 @@ On your phone, open the link and use your browser's **Add to Home Screen** to in
 
 Everything you edit saves automatically to that device's local storage. Since there's no backend, edits made on your phone and on a computer won't sync to each other — each device keeps its own copy. "Reset for new trip" on the Plan tab clears checked-off items and manual quantity tweaks without touching your base list or saved plans; "Reset base list to defaults" on the Base List tab restores the original seeded items (your saved plans and their tags are untouched).
 
+### Demo mode
+
+Add `?demo=1` to the URL — **<https://tamar-sofer-geri.github.io/zipit/?demo=1>** — for a shareable, pre-populated sandbox: two example saved plans ("Israel Trip," "Hawaii Trip"), most items already tagged, a couple of items already checked off. It runs on its own local-storage key, completely separate from the real app, so nothing done there ever touches real data (and vice versa). A "Reset demo" button restores it to that starting point at any time.
+
 ## Deploying changes
 
 Any push to `main` is served directly by GitHub Pages — just edit `index.html` / `app.js` / `styles.css` and push. Bump the `?v=` query strings in `index.html` (and in `manifest.webmanifest`'s icon entries, if icons change) so phones and browsers pick up the new files instead of a cached copy.

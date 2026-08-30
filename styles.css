@@ -63,6 +63,12 @@ a{color:var(--accent);}
   border-bottom:1px solid var(--line);
   margin-bottom:22px;
 }
+.demo-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  background:var(--accent-soft);color:var(--accent-soft-text);
+  border-radius:var(--radius);padding:10px 14px;margin:-6px 0 22px;font-size:14px;
+}
+.demo-banner .btn{flex-shrink:0;}
 .brand{display:flex;align-items:center;gap:12px;}
 .brand-mark{font-size:32px;line-height:1;}
 .brand h1{font-size:30px;font-weight:600;letter-spacing:-0.01em;}
