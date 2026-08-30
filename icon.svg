@@ -3,21 +3,21 @@
 
   <!-- clouds -->
   <g fill="#FFFFFF">
-    <rect x="36" y="86" width="104" height="40" rx="20"/>
-    <circle cx="70" cy="86" r="26"/>
-    <circle cx="110" cy="80" r="20"/>
+    <rect x="88" y="171" width="64" height="26" rx="13"/>
+    <circle cx="102" cy="184" r="17"/>
+    <circle cx="138" cy="180" r="13"/>
 
-    <rect x="372" y="64" width="112" height="42" rx="21"/>
-    <circle cx="408" cy="64" r="27"/>
-    <circle cx="450" cy="60" r="21"/>
+    <rect x="360" y="171" width="64" height="26" rx="13"/>
+    <circle cx="374" cy="184" r="17"/>
+    <circle cx="410" cy="180" r="13"/>
 
-    <rect x="386" y="418" width="96" height="36" rx="18"/>
-    <circle cx="416" cy="418" r="23"/>
-    <circle cx="452" cy="416" r="18"/>
+    <rect x="88" y="315" width="64" height="26" rx="13"/>
+    <circle cx="102" cy="328" r="17"/>
+    <circle cx="138" cy="324" r="13"/>
 
-    <rect x="30" y="430" width="88" height="34" rx="17"/>
-    <circle cx="58" cy="430" r="22"/>
-    <circle cx="92" cy="428" r="16"/>
+    <rect x="360" y="315" width="64" height="26" rx="13"/>
+    <circle cx="374" cy="328" r="17"/>
+    <circle cx="410" cy="324" r="13"/>
   </g>
 
   <!-- telescoping handle -->
