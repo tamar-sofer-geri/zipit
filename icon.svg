@@ -1,5 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Zip It!">
-  <rect width="512" height="512" fill="#F2F5F4"/>
+  <rect width="512" height="512" fill="#AEDDF5"/>
+
+  <!-- clouds -->
+  <g fill="#FFFFFF">
+    <rect x="36" y="86" width="104" height="40" rx="20"/>
+    <circle cx="70" cy="86" r="26"/>
+    <circle cx="110" cy="80" r="20"/>
+
+    <rect x="372" y="64" width="112" height="42" rx="21"/>
+    <circle cx="408" cy="64" r="27"/>
+    <circle cx="450" cy="60" r="21"/>
+
+    <rect x="386" y="418" width="96" height="36" rx="18"/>
+    <circle cx="416" cy="418" r="23"/>
+    <circle cx="452" cy="416" r="18"/>
+
+    <rect x="30" y="430" width="88" height="34" rx="17"/>
+    <circle cx="58" cy="430" r="22"/>
+    <circle cx="92" cy="428" r="16"/>
+  </g>
+
   <!-- telescoping handle -->
   <rect x="214" y="132" width="16" height="60" rx="8" fill="#2B2F33"/>
   <rect x="282" y="132" width="16" height="60" rx="8" fill="#2B2F33"/>
@@ -15,5 +35,5 @@
   <circle cx="308" cy="380" r="14" fill="#2B2F33"/>
   <!-- luggage tag -->
   <rect x="330" y="248" width="30" height="22" rx="6" fill="#F0C34A"/>
-  <circle cx="336" cy="259" r="3" fill="#F2F5F4"/>
+  <circle cx="336" cy="259" r="3" fill="#AEDDF5"/>
 </svg>
