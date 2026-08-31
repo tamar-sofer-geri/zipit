@@ -133,12 +133,37 @@ var trip = STATE.trip || { days: 7, destination: '', tripTypes: [] };
 var manualOverrides = STATE.manualOverrides || {};
 var packed = STATE.packed || {};
 var extraItems = STATE.extraItems || [];
+var collapsedPlan = STATE.collapsedPlan || {};
+var collapsedBaseList = STATE.collapsedBaseList || {};
 var openMore = {};
 STATE.trip = trip;
 STATE.manualOverrides = manualOverrides;
 STATE.packed = packed;
 STATE.extraItems = extraItems;
+STATE.collapsedPlan = collapsedPlan;
+STATE.collapsedBaseList = collapsedBaseList;
 if (STATE.activePlanId === undefined) STATE.activePlanId = null;
+
+function attachLongPress(target, onLongPress){
+  var timer = null;
+  function start(){
+    clearTimeout(timer);
+    timer = setTimeout(onLongPress, 500);
+  }
+  function cancel(){ clearTimeout(timer); }
+  target.addEventListener('pointerdown', start);
+  target.addEventListener('pointerup', cancel);
+  target.addEventListener('pointerleave', cancel);
+  target.addEventListener('pointercancel', cancel);
+  target.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+}
+
+function toggleCollapse(map, storageField, cat, renderFn){
+  map[cat] = !map[cat];
+  STATE[storageField] = map;
+  persist();
+  renderFn();
+}
 
 function el(tag, attrs, children){
   var e = document.createElement(tag);
@@ -322,7 +347,7 @@ function resetTrip(){
 }
 
 function resetToDefaults(){
-  showConfirm('Reset the base list back to the originals? Your current trip selections and saved plans stay put.', 'Reset', function(){
+  showConfirm('Reset the base list back to the originals? Your current trip selections and saved trips stay put.', 'Reset', function(){
     var fresh = structuredCloneState(DEFAULT_STATE);
     STATE.items = fresh.items;
     STATE.categories = fresh.categories;
@@ -386,7 +411,7 @@ function savePlan(){
 }
 
 function savePlanAs(){
-  showPrompt('Name this plan', 'Trip', '', function(name){
+  showPrompt('Name this trip', 'Trip', '', function(name){
     var plan = currentPlanSnapshot(name);
     STATE.savedPlans.push(plan);
     STATE.activePlanId = plan.id;
@@ -437,7 +462,7 @@ function newPlan(){
 function renamePlan(id){
   var plan = findPlan(id);
   if (!plan) return;
-  showPrompt('Rename plan', plan.name, '', function(name){
+  showPrompt('Rename trip', plan.name, '', function(name){
     plan.name = name;
     persist();
     renderPlans();
@@ -465,11 +490,11 @@ function renderPlan(){
 
   var active = STATE.activePlanId ? findPlan(STATE.activePlanId) : null;
   var planBar = el('div', { class: 'plan-bar' }, [
-    el('span', { class: 'plan-name', text: active ? active.name : 'Unsaved plan' }),
+    el('span', { class: 'plan-name', text: active ? active.name : 'Unsaved trip' }),
     el('div', { class: 'plan-bar-actions' }, [
-      el('button', { class: 'btn ghost', type: 'button', text: active ? 'Save' : 'Save plan…', onclick: savePlan }),
+      el('button', { class: 'btn ghost', type: 'button', text: active ? 'Save' : 'Save trip…', onclick: savePlan }),
       active ? el('button', { class: 'btn ghost', type: 'button', text: 'Save as new…', onclick: savePlanAs }) : null,
-      el('button', { class: 'btn ghost', type: 'button', text: '+ New plan', onclick: newPlan })
+      el('button', { class: 'btn ghost', type: 'button', text: '+ New trip', onclick: newPlan })
     ])
   ]);
   view.appendChild(planBar);
@@ -546,9 +571,15 @@ function renderPlan(){
       if (r.qty > 0) visible.push({ item: it, r: r }); else hidden.push(it);
     });
 
-    var card = el('article', { class: 'cat-card' });
+    var isCollapsed = !!collapsedPlan[cat];
+    var card = el('article', { class: 'cat-card' + (isCollapsed ? ' collapsed' : '') });
+    var titleEl = el('h2', {}, [
+      el('span', { class: 'collapse-indicator', text: isCollapsed ? '▸' : '▾' }),
+      document.createTextNode(cat)
+    ]);
+    attachLongPress(titleEl, function(){ toggleCollapse(collapsedPlan, 'collapsedPlan', cat, renderPlan); });
     card.appendChild(el('header', {}, [
-      el('h2', { text: cat }),
+      titleEl,
       el('span', { class: 'count mono', text: String(visible.length) })
     ]));
 
@@ -663,8 +694,14 @@ function renderBaseList(){
 
   STATE.categories.forEach(function(cat){
     var catItems = STATE.items.filter(function(it){ return it.category === cat; });
-    var card = el('div', { class: 'edit-card' });
-    card.appendChild(el('header', {}, [ el('h2', { text: cat }), el('span', { class: 'count mono', text: String(catItems.length) }) ]));
+    var isCollapsed = !!collapsedBaseList[cat];
+    var card = el('div', { class: 'edit-card' + (isCollapsed ? ' collapsed' : '') });
+    var titleEl = el('h2', {}, [
+      el('span', { class: 'collapse-indicator', text: isCollapsed ? '▸' : '▾' }),
+      document.createTextNode(cat)
+    ]);
+    attachLongPress(titleEl, function(){ toggleCollapse(collapsedBaseList, 'collapsedBaseList', cat, renderBaseList); });
+    card.appendChild(el('header', {}, [ titleEl, el('span', { class: 'count mono', text: String(catItems.length) }) ]));
 
     var list = el('ul', { class: 'item-list edit-list' });
     catItems.forEach(function(item){
@@ -825,11 +862,11 @@ function renderPlans(){
   view.innerHTML = '';
 
   view.appendChild(el('div', { class: 'toolbar' }, [
-    el('button', { class: 'btn', type: 'button', text: '+ New plan', onclick: newPlan })
+    el('button', { class: 'btn', type: 'button', text: '+ New trip', onclick: newPlan })
   ]));
 
   if (!STATE.savedPlans.length){
-    view.appendChild(el('div', { class: 'empty-hint', text: 'No saved plans yet. Set up a trip on Plan, then tap "Save plan…".' }));
+    view.appendChild(el('div', { class: 'empty-hint', text: 'No saved trips yet. Set up a trip on Trips, then tap "Save trip…".' }));
     return;
   }
 
@@ -870,8 +907,8 @@ function boot(){
     '<header class="topbar">' +
       '<div class="brand"><span class="brand-mark">🧳</span><div><h1>Zip It!</h1><p class="eyebrow">packing, calculated</p></div></div>' +
       '<nav class="tabs" role="tablist">' +
-        '<button class="tab active" data-tab="plan">Plan</button>' +
-        '<button class="tab" data-tab="plans">Saved Plans</button>' +
+        '<button class="tab active" data-tab="plan">Trips</button>' +
+        '<button class="tab" data-tab="plans">Saved Trips</button>' +
         '<button class="tab" data-tab="baselist">Base List</button>' +
       '</nav>' +
     '</header>' +
