@@ -206,9 +206,24 @@ function computeItem(item){
   return { qty: qty };
 }
 
+function syncActivePlan(){
+  if (!STATE.activePlanId) return;
+  var active = findPlan(STATE.activePlanId);
+  if (!active) return;
+  active.days = trip.days;
+  active.destination = trip.destination;
+  active.tripTypes = trip.tripTypes.slice();
+  active.packed = JSON.parse(JSON.stringify(packed));
+  active.manualOverrides = JSON.parse(JSON.stringify(manualOverrides));
+  active.extraItems = JSON.parse(JSON.stringify(extraItems));
+  active.updatedAt = Date.now();
+}
+
 function setDays(n){
   trip.days = Math.max(1, Math.min(60, n || 1));
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
@@ -217,12 +232,16 @@ function toggleTripType(key, on){
   if (on && idx === -1) trip.tripTypes.push(key);
   else if (!on && idx !== -1) trip.tripTypes.splice(idx, 1);
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
 function setDestination(key){
   trip.destination = key;
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
@@ -239,6 +258,8 @@ function adjustQty(id, delta){
   var current = manualOverrides.hasOwnProperty(id) ? manualOverrides[id] : computeItem(item).qty;
   manualOverrides[id] = Math.max(0, current + delta);
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
@@ -247,12 +268,16 @@ function forceAdd(id){
   var base = baseQty(item);
   manualOverrides[id] = base > 0 ? base : 1;
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
 function addExtraItem(name){
   extraItems.push({ id: 'extra' + Math.random().toString(36).slice(2, 9), name: name, qty: 1 });
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
@@ -261,6 +286,8 @@ function adjustExtraQty(id, delta){
   if (!item) return;
   item.qty = Math.max(1, item.qty + delta);
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
@@ -269,12 +296,16 @@ function removeExtraItem(id){
   STATE.extraItems = extraItems;
   delete packed[id];
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
 function togglePacked(id){
   packed[id] = !packed[id];
   persist();
+  syncActivePlan();
+  renderPlans();
   var row = document.querySelector('.item-row[data-id="' + cssEscape(id) + '"]');
   if (row) row.classList.toggle('packed', !!packed[id]);
   updateProgress();
@@ -343,6 +374,8 @@ function resetTrip(){
   STATE.packed = packed;
   STATE.extraItems = extraItems;
   persist();
+  syncActivePlan();
+  renderPlans();
   renderPlan();
 }
 
@@ -390,24 +423,6 @@ function currentPlanSnapshot(name){
     extraItems: JSON.parse(JSON.stringify(extraItems)),
     updatedAt: Date.now()
   };
-}
-
-function savePlan(){
-  var active = STATE.activePlanId ? findPlan(STATE.activePlanId) : null;
-  if (active){
-    active.days = trip.days;
-    active.destination = trip.destination;
-    active.tripTypes = trip.tripTypes.slice();
-    active.packed = JSON.parse(JSON.stringify(packed));
-    active.manualOverrides = JSON.parse(JSON.stringify(manualOverrides));
-    active.extraItems = JSON.parse(JSON.stringify(extraItems));
-    active.updatedAt = Date.now();
-    persist();
-    renderPlan();
-    renderPlans();
-    return;
-  }
-  savePlanAs();
 }
 
 function savePlanAs(){
@@ -490,9 +505,14 @@ function renderPlan(){
 
   var active = STATE.activePlanId ? findPlan(STATE.activePlanId) : null;
   var planBar = el('div', { class: 'plan-bar' }, [
-    el('span', { class: 'plan-name', text: active ? active.name : 'Unsaved trip' }),
+    el('div', { class: 'plan-name-row' }, [
+      el('span', { class: 'plan-name', text: active ? active.name : 'Unsaved trip' }),
+      active ? el('span', { class: 'autosave-indicator', title: 'Every change here saves automatically.' }, [
+        document.createTextNode('✓ Autosaved')
+      ]) : null
+    ]),
     el('div', { class: 'plan-bar-actions' }, [
-      el('button', { class: 'btn ghost', type: 'button', text: active ? 'Save' : 'Save trip…', onclick: savePlan }),
+      !active ? el('button', { class: 'btn ghost', type: 'button', text: 'Save trip…', onclick: savePlanAs }) : null,
       active ? el('button', { class: 'btn ghost', type: 'button', text: 'Save as new…', onclick: savePlanAs }) : null,
       el('button', { class: 'btn ghost', type: 'button', text: '+ New trip', onclick: newPlan })
     ])
