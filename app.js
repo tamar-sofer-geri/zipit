@@ -166,7 +166,9 @@ function tagLabel(key){
 }
 
 function baseQty(item){
-  return item.mode === 'fixed' ? item.qty : Math.ceil((item.rate || 0) * trip.days);
+  if (item.mode === 'fixed') return item.qty;
+  if (item.mode === 'perWeek') return Math.ceil((item.rate || 0) * (trip.days / 7));
+  return Math.ceil((item.rate || 0) * trip.days);
 }
 
 function computeItem(item){
@@ -688,7 +690,10 @@ function renderBaseList(){
 
 function renderItemSummaryRow(item){
   if (!item.tags) item.tags = [];
-  var metaParts = [ item.mode === 'fixed' ? ('Fixed · ' + item.qty) : ('Per day · ' + item.rate + '/day') ];
+  var modeMeta = item.mode === 'fixed' ? ('Fixed · ' + item.qty)
+    : item.mode === 'perWeek' ? ('Per week · ' + item.rate + '/week')
+    : ('Per day · ' + item.rate + '/day');
+  var metaParts = [ modeMeta ];
   if (item.tags.length){
     metaParts.push(item.tags.map(tagLabel).join(', '));
   }
@@ -760,28 +765,31 @@ function openItemEditor(item, focusName){
   body.appendChild(buildTagField('Destination', STATE.destinations));
   body.appendChild(buildTagField('Trip type', STATE.tripTypes));
 
+  var MODE_LABELS = { fixed: 'Fixed', perDay: 'Per day', perWeek: 'Per week' };
   var modeSelect = el('select', { class: 'select-field' });
-  ['fixed', 'perDay'].forEach(function(m){
-    var opt = el('option', { value: m, text: m === 'fixed' ? 'Fixed' : 'Per day' });
+  ['fixed', 'perDay', 'perWeek'].forEach(function(m){
+    var opt = el('option', { value: m, text: MODE_LABELS[m] });
     if (item.mode === m) opt.setAttribute('selected', '');
     modeSelect.appendChild(opt);
   });
   modeSelect.addEventListener('change', function(){
     if (modeSelect.value === 'fixed'){ item.mode = 'fixed'; item.qty = item.qty || 1; delete item.rate; }
-    else { item.mode = 'perDay'; item.rate = item.rate || 0; delete item.qty; }
+    else { item.mode = modeSelect.value; item.rate = item.rate || 0; delete item.qty; }
     persist();
     openItemEditor(item);
   });
   body.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Mode' }), modeSelect ]));
 
-  var qtyInput = el('input', { class: 'editor-input', type: 'number', step: item.mode === 'perDay' ? '0.1' : '1', min: '0',
-    value: item.mode === 'perDay' ? item.rate : item.qty });
+  var isRateMode = item.mode === 'perDay' || item.mode === 'perWeek';
+  var qtyInput = el('input', { class: 'editor-input', type: 'number', step: isRateMode ? '0.1' : '1', min: '0',
+    value: isRateMode ? item.rate : item.qty });
   qtyInput.addEventListener('input', function(){
     var v = parseFloat(qtyInput.value) || 0;
-    if (item.mode === 'perDay') item.rate = v; else item.qty = v;
+    if (isRateMode) item.rate = v; else item.qty = v;
     persist();
   });
-  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: item.mode === 'perDay' ? 'Rate per day' : 'Quantity' }), qtyInput ]));
+  var qtyLabel = item.mode === 'perDay' ? 'Rate per day' : item.mode === 'perWeek' ? 'Rate per week' : 'Quantity';
+  body.appendChild(el('div', { class: 'field' }, [ el('label', { text: qtyLabel }), qtyInput ]));
 
   var noteInput = el('input', { class: 'editor-input', type: 'text', value: item.note || '', placeholder: 'Optional' });
   noteInput.addEventListener('input', function(){ item.note = noteInput.value || undefined; persist(); });
