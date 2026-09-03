@@ -1038,6 +1038,30 @@ function switchTab(tab){
   document.querySelectorAll('.view').forEach(function(v){ v.classList.toggle('active', v.id === 'view-' + tab); });
 }
 
+// ---------- Back-gesture guard (Android) ----------
+// A page with no browser-history entries makes Android's back button/edge-swipe
+// close the app outright instead of doing anything in-page. Keeping one extra
+// history entry armed means that gesture always lands on us as a popstate
+// event instead — closing an open dialog first, or returning to the Trips tab.
+
+var BACK_DEFAULT_TAB = 'plan';
+
+function armBackGuard(){
+  try { history.pushState({ zipitGuard: true }, ''); } catch (e){}
+}
+
+function closeOpenDialogs(){
+  var open = document.querySelectorAll('dialog[open]');
+  if (!open.length) return false;
+  open.forEach(function(d){ d.close(); });
+  return true;
+}
+
+window.addEventListener('popstate', function(){
+  if (!closeOpenDialogs()) switchTab(BACK_DEFAULT_TAB);
+  armBackGuard();
+});
+
 // ---------- Boot ----------
 
 function boot(){
@@ -1078,6 +1102,7 @@ function boot(){
   renderPlans();
   renderSyncStatus();
   initCloud();
+  armBackGuard();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
