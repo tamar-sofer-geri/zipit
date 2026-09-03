@@ -76,6 +76,12 @@ a{color:var(--accent);}
   margin:2px 0 0;font-size:12.5px;letter-spacing:0.12em;text-transform:uppercase;
   color:var(--muted);font-weight:600;
 }
+.sync-status{display:flex;align-items:center;}
+.sync-badge{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;
+  color:var(--success);background:var(--success-soft);padding:7px 14px;border-radius:999px;
+}
+.sync-connect-btn{font-size:13px;padding:7px 14px;}
 .tabs{display:flex;gap:2px;background:var(--surface-alt);padding:3px;border-radius:999px;}
 .tab{
   border:none;background:transparent;color:var(--muted);

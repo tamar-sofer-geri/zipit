@@ -127,22 +127,145 @@ function persist(){
   persistTimer = setTimeout(function(){
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch (e){}
   }, 150);
+  pushCloud();
 }
 
-var trip = STATE.trip || { days: 7, destination: '', tripTypes: [] };
-var manualOverrides = STATE.manualOverrides || {};
-var packed = STATE.packed || {};
-var extraItems = STATE.extraItems || [];
-var collapsedPlan = STATE.collapsedPlan || {};
-var collapsedBaseList = STATE.collapsedBaseList || {};
+var trip, manualOverrides, packed, extraItems, collapsedPlan, collapsedBaseList;
 var openMore = {};
-STATE.trip = trip;
-STATE.manualOverrides = manualOverrides;
-STATE.packed = packed;
-STATE.extraItems = extraItems;
-STATE.collapsedPlan = collapsedPlan;
-STATE.collapsedBaseList = collapsedBaseList;
-if (STATE.activePlanId === undefined) STATE.activePlanId = null;
+
+function rehydrateFromState(){
+  trip = STATE.trip || { days: 7, destination: '', tripTypes: [] };
+  manualOverrides = STATE.manualOverrides || {};
+  packed = STATE.packed || {};
+  extraItems = STATE.extraItems || [];
+  collapsedPlan = STATE.collapsedPlan || {};
+  collapsedBaseList = STATE.collapsedBaseList || {};
+  STATE.trip = trip;
+  STATE.manualOverrides = manualOverrides;
+  STATE.packed = packed;
+  STATE.extraItems = extraItems;
+  STATE.collapsedPlan = collapsedPlan;
+  STATE.collapsedBaseList = collapsedBaseList;
+  if (STATE.activePlanId === undefined) STATE.activePlanId = null;
+}
+rehydrateFromState();
+
+// ---------- Shared (cloud) sync ----------
+// Reuses the same Supabase project as the sister apps. Local demo mode never
+// touches this — it stays fully isolated from the real shared data.
+
+var CLOUD_CONNECTED_KEY = 'manifest-cloud-connected-v1';
+var CLOUD_ROW_ID = 'shared';
+var CLOUD_ENABLED = !IS_DEMO && !!(window.ZIPIT_CONFIG && window.ZIPIT_CONFIG.supabaseUrl && window.ZIPIT_CONFIG.supabaseAnonKey);
+var supa = null;
+if (CLOUD_ENABLED){
+  try { supa = window.supabase.createClient(window.ZIPIT_CONFIG.supabaseUrl, window.ZIPIT_CONFIG.supabaseAnonKey); }
+  catch (e){ supa = null; CLOUD_ENABLED = false; }
+}
+var cloudConnected = CLOUD_ENABLED && localStorage.getItem(CLOUD_CONNECTED_KEY) === '1';
+var cloudChannel = null;
+var applyingRemote = false;
+var cloudPushTimer = null;
+
+function pushCloud(){
+  if (!CLOUD_ENABLED || !cloudConnected || applyingRemote) return;
+  if (cloudPushTimer) clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(pushCloudNow, 400);
+}
+
+function pushCloudNow(){
+  if (!CLOUD_ENABLED || !cloudConnected) return;
+  supa.from('zipit_state').upsert({ id: CLOUD_ROW_ID, data: STATE, updated_at: new Date().toISOString() })
+    .then(function(res){ if (res && res.error) console.error('Zip It cloud sync: push failed', res.error); });
+}
+
+function pullCloudState(cb){
+  supa.from('zipit_state').select('id, data').eq('id', CLOUD_ROW_ID).maybeSingle()
+    .then(function(res){
+      if (res && res.error) console.error('Zip It cloud sync: pull failed', res.error);
+      cb(res && !res.error ? res.data : null);
+    });
+}
+
+function subscribeRealtime(){
+  if (!CLOUD_ENABLED || cloudChannel) return;
+  cloudChannel = supa.channel('zipit_state_changes')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'zipit_state', filter: 'id=eq.' + CLOUD_ROW_ID }, function(payload){
+      if (!payload.new || !payload.new.data) return;
+      applyingRemote = true;
+      STATE = payload.new.data;
+      rehydrateFromState();
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch (e){}
+      applyingRemote = false;
+      renderAll();
+    })
+    .subscribe();
+}
+
+function connectCloudSync(){
+  if (!CLOUD_ENABLED) return;
+  pullCloudState(function(row){
+    if (row && row.data){
+      showConfirm('Connect to the shared list? This replaces what\'s on this device with the shared list everyone sees.', 'Connect', function(){
+        applyingRemote = true;
+        STATE = row.data;
+        rehydrateFromState();
+        applyingRemote = false;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch (e){}
+        cloudConnected = true;
+        try { localStorage.setItem(CLOUD_CONNECTED_KEY, '1'); } catch (e){}
+        subscribeRealtime();
+        renderAll();
+      });
+    } else {
+      showConfirm('Connect to shared sync? This uploads your current list so others you share the link with can see and edit it too.', 'Connect', function(){
+        cloudConnected = true;
+        try { localStorage.setItem(CLOUD_CONNECTED_KEY, '1'); } catch (e){}
+        pushCloudNow();
+        subscribeRealtime();
+        renderAll();
+      });
+    }
+  });
+}
+
+function initCloud(){
+  if (!CLOUD_ENABLED) return;
+  if (cloudConnected){
+    pullCloudState(function(row){
+      if (row && row.data){
+        applyingRemote = true;
+        STATE = row.data;
+        rehydrateFromState();
+        applyingRemote = false;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch (e){}
+      }
+      subscribeRealtime();
+      renderAll();
+    });
+  } else {
+    renderSyncStatus();
+  }
+}
+
+function renderSyncStatus(){
+  var box = document.getElementById('sync-status');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!CLOUD_ENABLED) return;
+  if (cloudConnected){
+    box.appendChild(el('span', { class: 'sync-badge', title: 'Shared in real time with anyone else connected', text: '🔗 Synced' }));
+  } else {
+    box.appendChild(el('button', { class: 'btn ghost sync-connect-btn', type: 'button', text: '🔗 Connect shared list', onclick: connectCloudSync }));
+  }
+}
+
+function renderAll(){
+  renderPlan();
+  renderBaseList();
+  renderPlans();
+  renderSyncStatus();
+}
 
 function attachLongPress(target, onLongPress){
   var timer = null;
@@ -393,11 +516,7 @@ function resetToDefaults(){
 function resetDemo(){
   showConfirm('Reset the whole demo back to its starting point? Everything you\'ve changed here will be lost.', 'Reset demo', function(){
     STATE = structuredCloneState(DEMO_STATE);
-    trip = STATE.trip;
-    manualOverrides = STATE.manualOverrides;
-    packed = STATE.packed;
-    extraItems = STATE.extraItems || [];
-    STATE.extraItems = extraItems;
+    rehydrateFromState();
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch (e){}
     renderPlan();
     renderBaseList();
@@ -931,6 +1050,7 @@ function boot(){
         '<button class="tab" data-tab="plans">Saved Trips</button>' +
         '<button class="tab" data-tab="baselist">Base List</button>' +
       '</nav>' +
+      '<div class="sync-status" id="sync-status"></div>' +
     '</header>' +
     (IS_DEMO ?
       '<div class="demo-banner">' +
@@ -956,6 +1076,8 @@ function boot(){
   renderPlan();
   renderBaseList();
   renderPlans();
+  renderSyncStatus();
+  initCloud();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
