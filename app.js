@@ -911,7 +911,9 @@ function renderExtraItemRow(item, attachHandle){
   cb.addEventListener('change', function(){ togglePacked(item.id); });
   row.appendChild(el('label', { class: 'check' }, [ cb, el('span', {}) ]));
 
-  row.appendChild(el('div', { class: 'item-main' }, [ el('span', { class: 'item-name', text: item.name }) ]));
+  row.appendChild(el('div', {
+    class: 'item-main tappable', onclick: function(){ renameExtraItem(item.id); }
+  }, [ el('span', { class: 'item-name', text: item.name }) ]));
 
   var qc = el('div', { class: 'qty-control' }, [
     el('button', { type: 'button', text: '−', onclick: function(){ adjustExtraQty(item.id, -1); } }),
@@ -920,7 +922,6 @@ function renderExtraItemRow(item, attachHandle){
   ]);
   row.appendChild(qc);
 
-  row.appendChild(el('button', { class: 'icon-btn', type: 'button', text: '✎', title: 'Edit', onclick: function(){ renameExtraItem(item.id); } }));
   row.appendChild(el('button', { class: 'icon-btn', type: 'button', text: '✕', title: 'Remove', onclick: function(){ removeExtraItem(item.id); } }));
 
   var handle = el('span', { class: 'drag-handle', title: 'Drag to reorder', text: '⠿' });
