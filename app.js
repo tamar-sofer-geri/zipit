@@ -483,7 +483,12 @@ function addExtraItem(name){
 function adjustExtraQty(id, delta){
   var item = extraItems.filter(function(it){ return it.id === id; })[0];
   if (!item) return;
-  item.qty = Math.max(1, item.qty + delta);
+  var qty = item.qty + delta;
+  if (qty < 1){
+    removeExtraItem(id);
+    return;
+  }
+  item.qty = qty;
   persist();
   syncActivePlan();
   renderPlans();
@@ -500,16 +505,40 @@ function removeExtraItem(id){
   renderPlan();
 }
 
-function renameExtraItem(id){
+function editExtraItem(id){
   var item = extraItems.filter(function(it){ return it.id === id; })[0];
   if (!item) return;
-  showPrompt('Edit item', item.name, '', function(name){
-    item.name = name;
+
+  var dialog = document.getElementById('prompt-dialog');
+  dialog.innerHTML = '';
+  dialog.appendChild(el('div', { class: 'dialog-header' }, [ el('h2', { text: 'Edit item' }) ]));
+
+  var input = el('input', { class: 'editor-input', type: 'text', value: item.name, placeholder: '' });
+  var body = el('div', { class: 'item-editor' }, [ el('div', { class: 'field' }, [ input ]) ]);
+  dialog.appendChild(body);
+
+  function save(){
+    var v = input.value.trim();
+    dialog.close();
+    if (!v) return;
+    item.name = v;
     persist();
     syncActivePlan();
     renderPlans();
     renderPlan();
-  });
+  }
+
+  input.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); save(); } });
+
+  var footer = el('div', { class: 'dialog-footer' }, [
+    el('button', { class: 'btn ghost', type: 'button', text: 'Delete item', onclick: function(){ dialog.close(); removeExtraItem(id); } }),
+    el('button', { class: 'btn primary', type: 'button', text: 'Save', onclick: save })
+  ]);
+  dialog.appendChild(footer);
+
+  dialog.showModal();
+  input.focus();
+  input.select();
 }
 
 function togglePacked(id){
@@ -912,17 +941,15 @@ function renderExtraItemRow(item, attachHandle){
   row.appendChild(el('label', { class: 'check' }, [ cb, el('span', {}) ]));
 
   row.appendChild(el('div', {
-    class: 'item-main tappable', onclick: function(){ renameExtraItem(item.id); }
+    class: 'item-main tappable', onclick: function(){ editExtraItem(item.id); }
   }, [ el('span', { class: 'item-name', text: item.name }) ]));
 
   var qc = el('div', { class: 'qty-control' }, [
-    el('button', { type: 'button', text: '−', onclick: function(){ adjustExtraQty(item.id, -1); } }),
+    el('button', { type: 'button', text: '−', title: item.qty === 1 ? 'Remove' : '', onclick: function(){ adjustExtraQty(item.id, -1); } }),
     el('span', { class: 'qty mono', text: String(item.qty) }),
     el('button', { type: 'button', text: '+', onclick: function(){ adjustExtraQty(item.id, 1); } })
   ]);
   row.appendChild(qc);
-
-  row.appendChild(el('button', { class: 'icon-btn', type: 'button', text: '✕', title: 'Remove', onclick: function(){ removeExtraItem(item.id); } }));
 
   var handle = el('span', { class: 'drag-handle', title: 'Drag to reorder', text: '⠿' });
   row.appendChild(handle);
