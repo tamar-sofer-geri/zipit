@@ -288,6 +288,82 @@ function toggleCollapse(map, storageField, cat, renderFn){
   renderFn();
 }
 
+// Drag-to-reorder for a <ul> of <li class="item-row" data-id="..."> rows.
+// Reorders the actual DOM nodes live as the pointer moves (works for mouse
+// and touch via Pointer Events), then hands the final id order to onDrop
+// once the drag ends. Returns a function to wire a drag-handle element to a
+// given row.
+function makeListDraggable(listEl, onDrop){
+  var draggingRow = null;
+
+  function rowAfterPointer(y){
+    var rows = Array.prototype.slice.call(listEl.children).filter(function(r){
+      return r.classList.contains('item-row') && r !== draggingRow;
+    });
+    var closest = { offset: -Infinity, element: null };
+    rows.forEach(function(r){
+      var box = r.getBoundingClientRect();
+      var offset = y - (box.top + box.height / 2);
+      if (offset < 0 && offset > closest.offset) closest = { offset: offset, element: r };
+    });
+    return closest.element;
+  }
+
+  function onMove(e){
+    if (!draggingRow) return;
+    e.preventDefault();
+    var y = e.touches ? e.touches[0].clientY : e.clientY;
+    var after = rowAfterPointer(y);
+    if (after == null) listEl.appendChild(draggingRow);
+    else listEl.insertBefore(draggingRow, after);
+  }
+
+  function onUp(){
+    if (!draggingRow) return;
+    draggingRow.classList.remove('dragging');
+    var row = draggingRow;
+    draggingRow = null;
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.removeEventListener('pointercancel', onUp);
+    var newOrder = Array.prototype.slice.call(listEl.children)
+      .filter(function(r){ return r.classList.contains('item-row'); })
+      .map(function(r){ return r.getAttribute('data-id'); });
+    onDrop(newOrder, row);
+  }
+
+  return function attachHandle(handleEl, rowEl){
+    handleEl.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      draggingRow = rowEl;
+      rowEl.classList.add('dragging');
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    });
+  };
+}
+
+// Reorders STATE.items so the given category's items follow newVisibleIdOrder,
+// keeping every item currently hidden for this trip in its original relative
+// slot (only the visible ones — the ones the user could actually drag — move).
+function reorderCategoryItems(cat, newVisibleIdOrder){
+  var queue = newVisibleIdOrder.slice();
+  var visibleIds = {};
+  queue.forEach(function(id){ visibleIds[id] = true; });
+  STATE.items = STATE.items.map(function(it){
+    if (it.category !== cat || !visibleIds[it.id]) return it;
+    return itemById(queue.shift());
+  });
+}
+
+function reorderExtraItems(newIdOrder){
+  extraItems = newIdOrder.map(function(id){
+    return extraItems.filter(function(it){ return it.id === id; })[0];
+  });
+  STATE.extraItems = extraItems;
+}
+
 function el(tag, attrs, children){
   var e = document.createElement(tag);
   attrs = attrs || {};
@@ -422,6 +498,18 @@ function removeExtraItem(id){
   syncActivePlan();
   renderPlans();
   renderPlan();
+}
+
+function renameExtraItem(id){
+  var item = extraItems.filter(function(it){ return it.id === id; })[0];
+  if (!item) return;
+  showPrompt('Edit item', item.name, '', function(name){
+    item.name = name;
+    persist();
+    syncActivePlan();
+    renderPlans();
+    renderPlan();
+  });
 }
 
 function togglePacked(id){
@@ -723,8 +811,14 @@ function renderPlan(){
     ]));
 
     var list = el('ul', { class: 'item-list' });
+    var attachCatHandle = makeListDraggable(list, function(newOrder){
+      reorderCategoryItems(cat, newOrder);
+      persist();
+      renderBaseList();
+      renderPlan();
+    });
     visible.forEach(function(v){
-      list.appendChild(renderItemRow(v.item, v.r));
+      list.appendChild(renderItemRow(v.item, v.r, attachCatHandle));
     });
     card.appendChild(list);
 
@@ -753,8 +847,15 @@ function renderPlan(){
     el('span', { class: 'count mono', text: String(extraItems.length) })
   ]));
   var extraList = el('ul', { class: 'item-list' });
+  var attachExtraHandle = makeListDraggable(extraList, function(newOrder){
+    reorderExtraItems(newOrder);
+    persist();
+    syncActivePlan();
+    renderPlans();
+    renderPlan();
+  });
   extraItems.forEach(function(it){
-    extraList.appendChild(renderExtraItemRow(it));
+    extraList.appendChild(renderExtraItemRow(it, attachExtraHandle));
   });
   extraCard.appendChild(extraList);
 
@@ -776,7 +877,7 @@ function renderPlan(){
   daysInput.addEventListener('change', function(){ setDays(parseInt(daysInput.value, 10)); });
 }
 
-function renderItemRow(item, r){
+function renderItemRow(item, r, attachHandle){
   var row = el('li', { class: 'item-row' + (packed[item.id] ? ' packed' : ''), 'data-id': item.id });
 
   var cb = el('input', { type: 'checkbox' });
@@ -795,10 +896,14 @@ function renderItemRow(item, r){
   ]);
   row.appendChild(qc);
 
+  var handle = el('span', { class: 'drag-handle', title: 'Drag to reorder', text: '⠿' });
+  row.appendChild(handle);
+  if (attachHandle) attachHandle(handle, row);
+
   return row;
 }
 
-function renderExtraItemRow(item){
+function renderExtraItemRow(item, attachHandle){
   var row = el('li', { class: 'item-row' + (packed[item.id] ? ' packed' : ''), 'data-id': item.id });
 
   var cb = el('input', { type: 'checkbox' });
@@ -815,7 +920,12 @@ function renderExtraItemRow(item){
   ]);
   row.appendChild(qc);
 
+  row.appendChild(el('button', { class: 'icon-btn', type: 'button', text: '✎', title: 'Edit', onclick: function(){ renameExtraItem(item.id); } }));
   row.appendChild(el('button', { class: 'icon-btn', type: 'button', text: '✕', title: 'Remove', onclick: function(){ removeExtraItem(item.id); } }));
+
+  var handle = el('span', { class: 'drag-handle', title: 'Drag to reorder', text: '⠿' });
+  row.appendChild(handle);
+  if (attachHandle) attachHandle(handle, row);
 
   return row;
 }
@@ -977,10 +1087,12 @@ function openItemEditor(item, focusName){
     el('button', {
       class: 'btn ghost', type: 'button', text: 'Delete item',
       onclick: function(){
-        STATE.items = STATE.items.filter(function(it){ return it.id !== item.id; });
-        persist();
-        dialog.close();
-        renderBaseList();
+        showConfirm('Delete "' + (item.name || 'this item') + '" from the base list? This can\'t be undone.', 'Delete', function(){
+          STATE.items = STATE.items.filter(function(it){ return it.id !== item.id; });
+          persist();
+          dialog.close();
+          renderBaseList();
+        });
       }
     }),
     el('button', { class: 'btn primary', type: 'button', text: 'Done', onclick: function(){ dialog.close(); renderBaseList(); } })

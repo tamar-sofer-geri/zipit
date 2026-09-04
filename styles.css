@@ -229,6 +229,12 @@ details.more summary::-webkit-details-marker{display:none;}
 details.more summary:before{content:"+ ";}
 details.more[open] summary:before{content:"– ";}
 .item-row.muted .item-name{color:var(--muted);}
+.drag-handle{
+  flex-shrink:0;cursor:grab;color:var(--muted);font-size:18px;line-height:1;
+  padding:4px 2px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+}
+.drag-handle:hover{color:var(--ink);}
+.item-row.dragging{opacity:.5;background:var(--surface-alt);}
 .add-btn{
   margin-left:auto;border:1px dashed var(--line);background:transparent;color:var(--muted);
   border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;
