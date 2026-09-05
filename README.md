@@ -16,6 +16,10 @@ On your phone, open the link and use your browser's **Add to Home Screen** to in
 
 Everything you edit saves automatically to that device's local storage. "Reset for new trip" on the Trips tab clears checked-off items and manual quantity tweaks without touching your base list or saved trips; "Reset base list to defaults" on the Base List tab restores the original seeded items (your saved trips and their tags are untouched).
 
+### Weather & packing tips
+
+Once a trip has both a start date and a destination, a "🌦️ Weather & packing tips" popup opens automatically (and stays reachable afterward via a button right under Trip type) — a real forecast if the trip starts within about two weeks, or typical conditions for those dates based on the last few years if it's further out. Alongside the temperature range, rain chance, and wind, it surfaces a couple of plain-language tips (an umbrella for a rainy outlook, a warm jacket for cold lows, and so on), each with a one-tap "+ Add" to drop it straight into that trip's Extra items. Weather lookups use [Open-Meteo](https://open-meteo.com) — free, no account or API key, matching the rest of the app. Israel, Hawaii, and New Orleans use fixed coordinates for a representative city (Open-Meteo's place search doesn't index "Hawaii" as the US state, so a live lookup was landing on an unrelated village in Guatemala); a destination you add yourself geocodes live, biased toward the best-known place with that name.
+
 ### Shared sync
 
 Tap **🔗 Connect shared list** in the header to sync everything — base list, tags, trips, checked-off items — with anyone else who connects, live. The first person to connect uploads their current list as the shared starting point; anyone who connects after that gets a confirmation that connecting will replace what's on their device with the shared list, since it's a one-way switch from "my own copy" to "the shared one." Once connected, a device shows **🔗 Synced** and every change pushes and pulls automatically in the background. Demo mode (`?demo=1`) never touches shared sync, even if the real app is connected on the same device.

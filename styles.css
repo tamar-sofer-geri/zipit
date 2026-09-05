@@ -307,6 +307,19 @@ details.more[open] summary:before{content:"– ";}
 .prompt-dialog .item-editor{max-height:none;}
 .confirm-message{font-size:16px;color:var(--ink);line-height:1.5;margin:0;}
 
+.weather-open-btn{margin-top:4px;align-self:flex-start;}
+.weather-summary{display:flex;flex-direction:column;gap:2px;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:4px;}
+.weather-place{font-size:17px;font-weight:600;}
+.weather-dates{font-size:14px;color:var(--muted);}
+.weather-mode{font-size:12.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-top:4px;}
+.weather-stats{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap;}
+.weather-stat{font-size:15px;font-weight:600;}
+.weather-tips{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.weather-tip{display:flex;align-items:center;gap:10px;font-size:15px;line-height:1.4;}
+.weather-tip span{flex:1;}
+.weather-add-btn{flex-shrink:0;white-space:nowrap;}
+.weather-add-btn:disabled{opacity:.6;cursor:default;}
+
 .celebrate-dialog{
   border:none;padding:0;background:transparent;width:100vw;height:100vh;max-width:none;max-height:none;
   overflow:hidden;color:var(--ink);

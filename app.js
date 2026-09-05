@@ -397,6 +397,254 @@ function formatTripDate(iso){
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// ---------- Weather & packing tips ----------
+// Free, keyless weather via Open-Meteo (open-meteo.com) — no account needed,
+// fits this app's no-sign-in model. Built-in destinations get hardcoded
+// coordinates rather than live geocoding: Open-Meteo's place search only
+// indexes exact-name places, so bare "Hawaii" resolves to a random village in
+// Guatemala instead of the US state (confirmed by hand) — there's no fixing
+// that with a smarter query, since the state itself just isn't a geocodable
+// entry there. User-added ("New…") destinations still geocode live, biased
+// toward the highest-population match so "Paris" means France, not Texas.
+
+var KNOWN_DESTINATION_COORDS = {
+  israel: { lat: 32.0853, lon: 34.7818, name: 'Tel Aviv', admin1: '', country: 'Israel' },
+  neworleans: { lat: 29.9511, lon: -90.0715, name: 'New Orleans', admin1: 'Louisiana', country: 'United States' },
+  hawaii: { lat: 21.3099, lon: -157.8581, name: 'Honolulu', admin1: 'Hawaii', country: 'United States' }
+};
+
+var weatherCache = null; // { key, data }
+var lastAutoWeatherKey = null;
+var weatherFetchToken = 0;
+
+function weatherKey(){
+  return trip.destination + '|' + trip.startDate + '|' + trip.days;
+}
+
+function isoDate(d){
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function parseISODate(iso){
+  var parts = iso.split('-');
+  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+function addDaysToDate(date, n){
+  var d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+function geocodeDestination(label){
+  var url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(label) + '&count=10&language=en&format=json';
+  return fetch(url).then(function(res){ return res.json(); }).then(function(data){
+    var results = (data && data.results) || [];
+    if (!results.length) return null;
+    function score(r){
+      var bonus = (r.feature_code === 'PCLI' || r.feature_code === 'PCL') ? 5000000 : 0;
+      return (r.population || 0) + bonus;
+    }
+    var best = results.reduce(function(a, b){ return score(b) > score(a) ? b : a; });
+    return { lat: best.latitude, lon: best.longitude, name: best.name, admin1: best.admin1 || '', country: best.country || '' };
+  });
+}
+
+function resolveDestinationPlace(){
+  var known = KNOWN_DESTINATION_COORDS[trip.destination];
+  if (known) return Promise.resolve(known);
+  return geocodeDestination(tagLabel(trip.destination));
+}
+
+function fetchForecastOutlook(lat, lon, startISO, endISO){
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+    '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_mean,windspeed_10m_max' +
+    '&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto' +
+    '&start_date=' + startISO + '&end_date=' + endISO;
+  return fetch(url).then(function(res){ return res.json(); }).then(function(data){
+    var daily = data && data.daily;
+    if (!daily || !daily.time || !daily.time.length) return null;
+    var highs = daily.temperature_2m_max || [];
+    var lows = daily.temperature_2m_min || [];
+    var rainProb = daily.precipitation_probability_mean || [];
+    var wind = daily.windspeed_10m_max || [];
+    return {
+      mode: 'forecast',
+      highF: highs.length ? Math.round(Math.max.apply(null, highs)) : null,
+      lowF: lows.length ? Math.round(Math.min.apply(null, lows)) : null,
+      rainPct: rainProb.length ? Math.round(rainProb.reduce(function(a, b){ return a + b; }, 0) / rainProb.length) : null,
+      windMph: wind.length ? Math.round(Math.max.apply(null, wind)) : null,
+      daysSampled: daily.time.length
+    };
+  });
+}
+
+function fetchHistoricalOutlook(lat, lon, startISO, days){
+  var startDate = parseISODate(startISO);
+  var endDate = addDaysToDate(startDate, Math.min(days, 10) - 1);
+  var yearsAgoList = [1, 2, 3];
+  var requests = yearsAgoList.map(function(yearsAgo){
+    var s = new Date(startDate); s.setFullYear(s.getFullYear() - yearsAgo);
+    var e = new Date(endDate); e.setFullYear(e.getFullYear() - yearsAgo);
+    var url = 'https://archive-api.open-meteo.com/v1/archive?latitude=' + lat + '&longitude=' + lon +
+      '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max' +
+      '&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timezone=auto' +
+      '&start_date=' + isoDate(s) + '&end_date=' + isoDate(e);
+    return fetch(url).then(function(res){ return res.json(); }).catch(function(){ return null; });
+  });
+  return Promise.all(requests).then(function(results){
+    var allDays = [];
+    results.forEach(function(data){
+      var d = data && data.daily;
+      if (!d || !d.time) return;
+      for (var i = 0; i < d.time.length; i++){
+        allDays.push({ high: d.temperature_2m_max[i], low: d.temperature_2m_min[i], precip: d.precipitation_sum[i], wind: d.windspeed_10m_max[i] });
+      }
+    });
+    if (!allDays.length) return null;
+    var highs = allDays.map(function(d){ return d.high; }).filter(function(v){ return v != null; });
+    var lows = allDays.map(function(d){ return d.low; }).filter(function(v){ return v != null; });
+    var winds = allDays.map(function(d){ return d.wind; }).filter(function(v){ return v != null; });
+    var rainyDays = allDays.filter(function(d){ return d.precip != null && d.precip >= 0.04; }).length;
+    return {
+      mode: 'historical',
+      highF: highs.length ? Math.round(Math.max.apply(null, highs)) : null,
+      lowF: lows.length ? Math.round(Math.min.apply(null, lows)) : null,
+      rainPct: Math.round((rainyDays / allDays.length) * 100),
+      windMph: winds.length ? Math.round(Math.max.apply(null, winds)) : null,
+      daysSampled: allDays.length
+    };
+  });
+}
+
+function getWeatherOutlook(){
+  return resolveDestinationPlace().then(function(place){
+    if (!place) return { error: 'place' };
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var startDate = parseISODate(trip.startDate);
+    var daysFromToday = Math.round((startDate - today) / 86400000);
+    var outlookPromise;
+    if (daysFromToday >= 0 && daysFromToday <= 15){
+      var forecastEnd = addDaysToDate(startDate, Math.max(0, Math.min(trip.days - 1, 15 - daysFromToday)));
+      outlookPromise = fetchForecastOutlook(place.lat, place.lon, trip.startDate, isoDate(forecastEnd));
+    } else {
+      outlookPromise = fetchHistoricalOutlook(place.lat, place.lon, trip.startDate, trip.days);
+    }
+    return outlookPromise.then(function(outlook){
+      return outlook ? { place: place, outlook: outlook } : { error: 'weather' };
+    });
+  }).catch(function(){ return { error: 'network' }; });
+}
+
+function buildPackingTips(outlook){
+  var tips = [];
+  if (outlook.highF != null && outlook.highF >= 85){
+    tips.push({ text: 'Highs near ' + outlook.highF + '°F — pack light, breathable clothing and extra sunscreen.', add: 'Extra sunscreen' });
+  }
+  if (outlook.lowF != null && outlook.lowF <= 45){
+    tips.push({ text: 'Lows near ' + outlook.lowF + '°F — pack a warm jacket and layers.', add: 'Warm jacket' });
+  }
+  if (outlook.rainPct != null && outlook.rainPct >= 40){
+    var rainNote = outlook.mode === 'forecast'
+      ? outlook.rainPct + '% chance of rain'
+      : 'rain is common this time of year (' + outlook.rainPct + '% of similar days)';
+    tips.push({ text: 'There’s ' + rainNote + ' — pack a compact umbrella or rain jacket.', add: 'Umbrella' });
+  }
+  if (outlook.windMph != null && outlook.windMph >= 25){
+    tips.push({ text: 'Winds up to ' + outlook.windMph + ' mph — a windbreaker could help.', add: 'Windbreaker' });
+  }
+  if (!tips.length){
+    tips.push({ text: 'Looks mild and dry — nothing extra needed beyond your usual base list.', add: null });
+  }
+  return tips;
+}
+
+function renderWeatherDialog(state){
+  var dialog = document.getElementById('weather-dialog');
+  if (!dialog) return;
+  dialog.innerHTML = '';
+  dialog.appendChild(el('div', { class: 'dialog-header' }, [
+    el('h2', { text: '🌦️ Weather & packing tips' }),
+    el('button', { class: 'icon-btn', type: 'button', text: '✕', title: 'Close', onclick: function(){ dialog.close(); } })
+  ]));
+
+  var body = el('div', { class: 'item-editor weather-body' });
+
+  if (state === 'loading'){
+    body.appendChild(el('p', { class: 'confirm-message', text: 'Checking the weather…' }));
+  } else if (state.error === 'place'){
+    body.appendChild(el('p', { class: 'confirm-message', text: 'Couldn’t find "' + tagLabel(trip.destination) + '" on the map. You can still pack by trip type as usual.' }));
+  } else if (state.error){
+    body.appendChild(el('p', { class: 'confirm-message', text: 'Couldn’t reach the weather service right now — try again in a bit.' }));
+  } else {
+    var place = state.place, outlook = state.outlook;
+    var placeLabel = place.name + (place.admin1 && place.admin1 !== place.name ? ', ' + place.admin1 : '') + (place.country ? ', ' + place.country : '');
+    var endLabel = trip.days > 1 ? formatTripDate(isoDate(addDaysToDate(parseISODate(trip.startDate), trip.days - 1))) : null;
+
+    body.appendChild(el('div', { class: 'weather-summary' }, [
+      el('div', { class: 'weather-place', text: placeLabel }),
+      el('div', { class: 'weather-dates', text: formatTripDate(trip.startDate) + (endLabel ? ' – ' + endLabel : '') }),
+      el('div', { class: 'weather-mode', text: outlook.mode === 'forecast' ? 'Forecast' : 'Typical for these dates, based on recent years' }),
+      el('div', { class: 'weather-stats' }, [
+        (outlook.highF != null && outlook.lowF != null) ? el('span', { class: 'weather-stat', text: '🌡️ ' + outlook.lowF + '°–' + outlook.highF + '°F' }) : null,
+        outlook.rainPct != null ? el('span', { class: 'weather-stat', text: '☔ ' + outlook.rainPct + '%' }) : null,
+        outlook.windMph != null ? el('span', { class: 'weather-stat', text: '💨 ' + outlook.windMph + ' mph' }) : null
+      ])
+    ]));
+
+    var tipsList = el('ul', { class: 'weather-tips' });
+    buildPackingTips(outlook).forEach(function(tip){
+      var row = el('li', { class: 'weather-tip' }, [ el('span', { text: tip.text }) ]);
+      if (tip.add){
+        row.appendChild(el('button', {
+          class: 'btn ghost weather-add-btn', type: 'button', text: '+ Add',
+          onclick: function(e){
+            addExtraItem(tip.add);
+            e.target.textContent = 'Added ✓';
+            e.target.disabled = true;
+          }
+        }));
+      }
+      tipsList.appendChild(row);
+    });
+    body.appendChild(tipsList);
+  }
+
+  dialog.appendChild(body);
+
+  dialog.appendChild(el('div', { class: 'dialog-footer' }, [
+    el('button', { class: 'btn ghost', type: 'button', text: 'Refresh', onclick: function(){ openWeatherDialog(true); } }),
+    el('button', { class: 'btn primary', type: 'button', text: 'Close', onclick: function(){ dialog.close(); } })
+  ]));
+}
+
+function openWeatherDialog(forceRefresh){
+  var dialog = document.getElementById('weather-dialog');
+  if (!dialog || !trip.startDate || !trip.destination) return;
+  var key = weatherKey();
+  if (!forceRefresh && weatherCache && weatherCache.key === key){
+    renderWeatherDialog(weatherCache.data);
+    dialog.showModal();
+    return;
+  }
+  renderWeatherDialog('loading');
+  dialog.showModal();
+  var token = ++weatherFetchToken;
+  getWeatherOutlook().then(function(result){
+    if (token !== weatherFetchToken) return;
+    weatherCache = { key: key, data: result };
+    renderWeatherDialog(result);
+  });
+}
+
+function maybeAutoShowWeather(){
+  if (!trip.startDate || !trip.destination) return;
+  var key = weatherKey();
+  if (key === lastAutoWeatherKey) return;
+  lastAutoWeatherKey = key;
+  openWeatherDialog(false);
+}
+
 function baseQty(item){
   if (item.mode === 'fixed') return item.qty;
   if (item.mode === 'perWeek') return Math.ceil((item.rate || 0) * (trip.days / 7));
@@ -433,6 +681,7 @@ function setStartDate(value){
   syncActivePlan();
   renderPlans();
   renderPlan();
+  maybeAutoShowWeather();
 }
 
 function setDays(n){
@@ -459,6 +708,7 @@ function setDestination(key){
   syncActivePlan();
   renderPlans();
   renderPlan();
+  maybeAutoShowWeather();
 }
 
 function addDestination(onAdded){
@@ -861,6 +1111,13 @@ function renderPlan(){
     ]));
   });
   panel.appendChild(el('div', { class: 'field' }, [ el('label', { text: 'Trip type' }), typeGroup ]));
+
+  if (trip.startDate && trip.destination){
+    panel.appendChild(el('button', {
+      class: 'btn ghost weather-open-btn', type: 'button', text: '🌦️ Weather & packing tips',
+      onclick: function(){ openWeatherDialog(false); }
+    }));
+  }
 
   view.appendChild(panel);
 
@@ -1299,7 +1556,8 @@ function boot(){
     '</main>' +
     '<dialog id="item-dialog" class="item-dialog"></dialog>' +
     '<dialog id="prompt-dialog" class="item-dialog prompt-dialog"></dialog>' +
-    '<dialog id="celebrate-dialog" class="celebrate-dialog"></dialog>';
+    '<dialog id="celebrate-dialog" class="celebrate-dialog"></dialog>' +
+    '<dialog id="weather-dialog" class="item-dialog weather-dialog"></dialog>';
 
   document.querySelectorAll('.tab').forEach(function(b){
     b.addEventListener('click', function(){ switchTab(b.getAttribute('data-tab')); });
