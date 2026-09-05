@@ -307,6 +307,36 @@ details.more[open] summary:before{content:"– ";}
 .prompt-dialog .item-editor{max-height:none;}
 .confirm-message{font-size:16px;color:var(--ink);line-height:1.5;margin:0;}
 
+.celebrate-dialog{
+  border:none;padding:0;background:transparent;width:100vw;height:100vh;max-width:none;max-height:none;
+  overflow:hidden;color:var(--ink);
+}
+.celebrate-dialog:not([open]){display:none;}
+.celebrate-dialog[open]{display:flex;align-items:center;justify-content:center;}
+.celebrate-dialog::backdrop{background:rgba(29,58,74,0.55);}
+.celebrate-card{
+  position:relative;z-index:1;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:32px 28px;text-align:center;max-width:300px;animation:celebrate-pop .35s ease;
+}
+.celebrate-emoji{font-size:48px;line-height:1;margin-bottom:10px;}
+.celebrate-card h2{font-size:24px;margin-bottom:6px;}
+.celebrate-card p{color:var(--muted);margin:0 0 20px;font-size:15px;}
+.celebrate-card .btn{width:100%;}
+@keyframes celebrate-pop{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+.confetti-piece{
+  position:absolute;top:-10px;left:0;border-radius:2px;
+  animation-name:confetti-fall;animation-timing-function:linear;animation-fill-mode:forwards;
+  animation-duration:var(--fall-duration);animation-delay:var(--fall-delay);
+}
+@keyframes confetti-fall{
+  from{transform:translateY(0) rotate(0deg);opacity:1;}
+  to{transform:translateY(110vh) rotate(var(--fall-rotate));opacity:.9;}
+}
+@media (prefers-reduced-motion: reduce){
+  .confetti-piece{display:none;}
+  .celebrate-card{animation:none;}
+}
+
 .rule-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;padding:16px;}
 .rule-card-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;}
 .rule-card-top input[type="text"]{

@@ -559,6 +559,7 @@ function editExtraItem(id){
 }
 
 function togglePacked(id){
+  var wasFullyPacked = isFullyPacked();
   packed[id] = !packed[id];
   persist();
   syncActivePlan();
@@ -566,6 +567,46 @@ function togglePacked(id){
   var row = document.querySelector('.item-row[data-id="' + cssEscape(id) + '"]');
   if (row) row.classList.toggle('packed', !!packed[id]);
   updateProgress();
+  if (!wasFullyPacked && isFullyPacked()) celebrateFullyPacked();
+}
+
+function isFullyPacked(){
+  var rows = document.querySelectorAll('#checklist .item-row[data-id]');
+  if (!rows.length) return false;
+  var allPacked = true;
+  rows.forEach(function(r){ if (!packed[r.getAttribute('data-id')]) allPacked = false; });
+  return allPacked;
+}
+
+var celebrateTimer = null;
+
+function celebrateFullyPacked(){
+  var dialog = document.getElementById('celebrate-dialog');
+  if (!dialog) return;
+  dialog.innerHTML = '';
+
+  var confettiColors = ['#3B76B8', '#7B5EA7', '#B44A3F', '#F2B705', '#E85D9E'];
+  for (var i = 0; i < 90; i++){
+    var piece = el('span', { class: 'confetti-piece' });
+    piece.style.left = (Math.random() * 100) + 'vw';
+    piece.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+    piece.style.width = piece.style.height = (5 + Math.random() * 5) + 'px';
+    piece.style.setProperty('--fall-duration', (2.2 + Math.random() * 1.6) + 's');
+    piece.style.setProperty('--fall-delay', (Math.random() * 0.5) + 's');
+    piece.style.setProperty('--fall-rotate', (Math.random() * 720 - 360) + 'deg');
+    dialog.appendChild(piece);
+  }
+
+  dialog.appendChild(el('div', { class: 'celebrate-card' }, [
+    el('div', { class: 'celebrate-emoji', text: '🎉' }),
+    el('h2', { text: 'You did it!' }),
+    el('p', { text: 'Have a great trip!' }),
+    el('button', { class: 'btn primary', type: 'button', text: 'Thanks!', onclick: function(){ dialog.close(); } })
+  ]));
+
+  dialog.showModal();
+  clearTimeout(celebrateTimer);
+  celebrateTimer = setTimeout(function(){ dialog.close(); }, 6000);
 }
 
 function cssEscape(s){ return s.replace(/[^a-zA-Z0-9_-]/g, '\\$&'); }
@@ -1257,7 +1298,8 @@ function boot(){
       '<section id="view-baselist" class="view"></section>' +
     '</main>' +
     '<dialog id="item-dialog" class="item-dialog"></dialog>' +
-    '<dialog id="prompt-dialog" class="item-dialog prompt-dialog"></dialog>';
+    '<dialog id="prompt-dialog" class="item-dialog prompt-dialog"></dialog>' +
+    '<dialog id="celebrate-dialog" class="celebrate-dialog"></dialog>';
 
   document.querySelectorAll('.tab').forEach(function(b){
     b.addEventListener('click', function(){ switchTab(b.getAttribute('data-tab')); });
