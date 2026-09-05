@@ -1484,15 +1484,17 @@ function renderPlans(){
     var planTags = (plan.destination ? [plan.destination] : []).concat(plan.tripTypes);
     if (planTags.length) meta += ' · ' + planTags.map(tagLabel).join(', ');
 
-    var card = el('div', { class: 'plan-card' + (isActive ? ' active' : '') }, [
+    var card = el('div', {
+      class: 'plan-card' + (isActive ? ' active' : ''), onclick: function(){ loadPlan(plan.id); }
+    }, [
       el('div', { class: 'plan-card-main' }, [
         el('div', { class: 'plan-card-name', text: plan.name }),
         el('div', { class: 'item-summary-meta', text: meta })
       ]),
       el('div', { class: 'plan-card-actions' }, [
-        el('button', { class: 'btn ghost', type: 'button', text: isActive ? 'Loaded' : 'Load', onclick: function(){ loadPlan(plan.id); } }),
-        el('button', { class: 'icon-btn', type: 'button', text: '✎', title: 'Rename', onclick: function(){ renamePlan(plan.id); } }),
-        el('button', { class: 'icon-btn', type: 'button', text: '✕', title: 'Delete', onclick: function(){ deletePlan(plan.id); } })
+        isActive ? el('span', { class: 'plan-card-loaded', text: 'Loaded' }) : null,
+        el('button', { class: 'icon-btn', type: 'button', text: '✎', title: 'Rename', onclick: function(e){ e.stopPropagation(); renamePlan(plan.id); } }),
+        el('button', { class: 'icon-btn', type: 'button', text: '✕', title: 'Delete', onclick: function(e){ e.stopPropagation(); deletePlan(plan.id); } })
       ])
     ]);
     view.appendChild(card);
