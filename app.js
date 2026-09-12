@@ -732,6 +732,27 @@ function deleteDestination(key){
   });
 }
 
+function addTripType(onAdded){
+  showPrompt('Add a trip type', '', 'e.g. Business', function(name){
+    var key = 'tt' + Math.random().toString(36).slice(2, 8);
+    STATE.tripTypes.push({ key: key, label: name, note: '' });
+    onAdded(key);
+  });
+}
+
+function deleteTripType(key){
+  var tt = STATE.tripTypes.filter(function(t){ return t.key === key; })[0];
+  if (!tt) return;
+  showConfirm('Delete trip type "' + tt.label + '"? It will be removed from any items tagged with it.', 'Delete', function(){
+    STATE.tripTypes = STATE.tripTypes.filter(function(t){ return t.key !== key; });
+    STATE.items.forEach(function(it){
+      if (it.tags) it.tags = it.tags.filter(function(t){ return t !== key; });
+    });
+    persist();
+    renderBaseList();
+  });
+}
+
 function deleteBaseListItem(item){
   showConfirm('Delete "' + (item.name || 'this item') + '" from the base list? This can\'t be undone.', 'Delete', function(){
     STATE.items = STATE.items.filter(function(it){ return it.id !== item.id; });
@@ -1326,9 +1347,28 @@ function renderBaseList(){
     type: 'button', class: 'chip chip-sm chip-add', text: '+ Add destination',
     onclick: function(){ addDestination(function(){ persist(); renderBaseList(); }); }
   }));
-  view.appendChild(el('div', { class: 'edit-card destinations-card' }, [
+  view.appendChild(el('div', { class: 'edit-card tag-manage-card' }, [
     el('header', {}, [ el('h2', { text: 'Destinations' }) ]),
-    el('div', { class: 'chip-group destinations-chip-group' }, destChips)
+    el('div', { class: 'chip-group' }, destChips)
+  ]));
+
+  var tripTypeChips = STATE.tripTypes.map(function(t){
+    return el('span', { class: 'chip chip-sm removable-chip' }, [
+      el('span', { text: t.label }),
+      el('button', {
+        type: 'button', class: 'chip-remove', title: 'Remove trip type',
+        onclick: function(e){ e.stopPropagation(); deleteTripType(t.key); },
+        text: '✕'
+      })
+    ]);
+  });
+  tripTypeChips.push(el('button', {
+    type: 'button', class: 'chip chip-sm chip-add', text: '+ Add trip type',
+    onclick: function(){ addTripType(function(){ persist(); renderBaseList(); }); }
+  }));
+  view.appendChild(el('div', { class: 'edit-card tag-manage-card' }, [
+    el('header', {}, [ el('h2', { text: 'Trip Types' }) ]),
+    el('div', { class: 'chip-group' }, tripTypeChips)
   ]));
 
   STATE.categories.forEach(function(cat){
