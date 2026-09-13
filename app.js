@@ -268,15 +268,36 @@ function renderAll(){
   renderSyncStatus();
 }
 
-function attachLongPress(target, onLongPress){
-  var timer = null;
+// Collapsing a category needs a long press (500ms hold), but expanding one
+// back open is a quick tap — a collapsed category shows almost nothing, so
+// there's no accidental-tap risk the long press is guarding against.
+//
+// A long press re-renders the list mid-gesture (to show the collapsed
+// state), which swaps in a brand new header element under the still-down
+// finger. The lift-off that follows then lands on that new element as an
+// unrelated "quick tap while collapsed", which would instantly re-expand
+// what the long press just collapsed. quickToggleLockedUntil is a brief,
+// shared cooldown after any long-press fire that suppresses that.
+var quickToggleLockedUntil = 0;
+
+function attachCollapseToggle(target, isCollapsed, onToggle){
+  var timer = null, longFired = false;
   function start(){
+    longFired = false;
     clearTimeout(timer);
-    timer = setTimeout(onLongPress, 500);
+    timer = setTimeout(function(){
+      longFired = true;
+      quickToggleLockedUntil = Date.now() + 400;
+      onToggle();
+    }, 500);
+  }
+  function release(){
+    clearTimeout(timer);
+    if (!longFired && isCollapsed() && Date.now() > quickToggleLockedUntil) onToggle();
   }
   function cancel(){ clearTimeout(timer); }
   target.addEventListener('pointerdown', start);
-  target.addEventListener('pointerup', cancel);
+  target.addEventListener('pointerup', release);
   target.addEventListener('pointerleave', cancel);
   target.addEventListener('pointercancel', cancel);
   target.addEventListener('contextmenu', function(e){ e.preventDefault(); });
@@ -1197,7 +1218,7 @@ function renderPlan(){
       el('span', { class: 'collapse-indicator', text: isCollapsed ? '▸' : '▾' }),
       document.createTextNode(cat)
     ]);
-    attachLongPress(titleEl, function(){ toggleCollapse(collapsedPlan, 'collapsedPlan', cat, renderPlan); });
+    attachCollapseToggle(titleEl, function(){ return !!collapsedPlan[cat]; }, function(){ toggleCollapse(collapsedPlan, 'collapsedPlan', cat, renderPlan); });
     card.appendChild(el('header', {}, [
       titleEl,
       el('span', { class: 'count mono', text: String(visible.length) })
@@ -1379,7 +1400,7 @@ function renderBaseList(){
       el('span', { class: 'collapse-indicator', text: isCollapsed ? '▸' : '▾' }),
       document.createTextNode(cat)
     ]);
-    attachLongPress(titleEl, function(){ toggleCollapse(collapsedBaseList, 'collapsedBaseList', cat, renderBaseList); });
+    attachCollapseToggle(titleEl, function(){ return !!collapsedBaseList[cat]; }, function(){ toggleCollapse(collapsedBaseList, 'collapsedBaseList', cat, renderBaseList); });
     card.appendChild(el('header', {}, [ titleEl, el('span', { class: 'count mono', text: String(catItems.length) }) ]));
 
     var list = el('ul', { class: 'item-list edit-list' });
