@@ -1769,9 +1769,12 @@ function renderPlans(){
 
 // ---------- Tabs ----------
 
+var TAB_KEY = 'zipit-tab';
+
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab') === tab); });
   document.querySelectorAll('.view').forEach(function(v){ v.classList.toggle('active', v.id === 'view-' + tab); });
+  try { sessionStorage.setItem(TAB_KEY, tab); } catch (e){}
 }
 
 // ---------- Back-gesture guard (Android) ----------
@@ -1840,8 +1843,18 @@ function boot(){
   document.getElementById('item-dialog').addEventListener('close', function(){ renderBaseList(); });
   document.getElementById('settings-btn').addEventListener('click', openSettings);
 
+  // Pull-to-refresh reloads the page, which would otherwise dump you back on
+  // Trips. sessionStorage (not localStorage) survives a reload but not closing
+  // the app, so a fresh launch still starts on Trips. Read before the
+  // next-trip auto-load below (which switches to Trips and would overwrite
+  // it), applied after.
+  var savedTab = null;
+  try { savedTab = sessionStorage.getItem(TAB_KEY); } catch (e){}
+
   var nextPlan = pickNextUpcomingPlan();
   if (nextPlan && nextPlan.id !== STATE.activePlanId) loadPlan(nextPlan.id);
+
+  if (savedTab && document.getElementById('view-' + savedTab)) switchTab(savedTab);
 
   renderPlan();
   renderBaseList();
