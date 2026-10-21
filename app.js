@@ -912,14 +912,35 @@ function editExtraItem(id){
   input.select();
 }
 
+// Keeps an extra item's checked/unchecked state grouped: a just-toggled item
+// lands at the boundary, so unchecked items stay clumped at the top.
+function regroupExtraItem(id){
+  var from = -1;
+  for (var i = 0; i < extraItems.length; i++) if (extraItems[i].id === id) from = i;
+  if (from === -1) return;
+  var item = extraItems.splice(from, 1)[0];
+  var lastUnchecked = -1;
+  extraItems.forEach(function(it, i){ if (!packed[it.id]) lastUnchecked = i; });
+  extraItems.splice(lastUnchecked + 1, 0, item);
+  STATE.extraItems = extraItems;
+}
+
 function togglePacked(id){
   var wasFullyPacked = isFullyPacked();
   packed[id] = !packed[id];
+  regroupExtraItem(id);
   persist();
   syncActivePlan();
   renderPlans();
   var row = document.querySelector('.item-row[data-id="' + cssEscape(id) + '"]');
   if (row) row.classList.toggle('packed', !!packed[id]);
+  var extraIdx = -1;
+  extraItems.forEach(function(it, i){ if (it.id === id) extraIdx = i; });
+  if (row && extraIdx !== -1 && row.parentNode){
+    var next = extraItems[extraIdx + 1];
+    var nextRow = next ? row.parentNode.querySelector('.item-row[data-id="' + cssEscape(next.id) + '"]') : null;
+    row.parentNode.insertBefore(row, nextRow);
+  }
   updateProgress();
   if (!wasFullyPacked && isFullyPacked()) celebrateFullyPacked();
 }
