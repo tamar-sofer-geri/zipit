@@ -2,6 +2,7 @@
   "name": "Zip It!",
   "short_name": "Zip It!",
   "description": "A packing checklist that scales by trip length, destination, and trip type",
+  "id": "/zipit/?install=2",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
